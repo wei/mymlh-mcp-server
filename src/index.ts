@@ -1,16 +1,14 @@
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { McpAgent } from "agents/mcp";
+import { name, version } from "../package.json";
 import { MyMLHHandler } from "./mymlh-handler";
 import type { MyMLHUser, Props } from "./utils";
 
-// You can optionally gate tools to specific users by id or email (left empty by default)
-const ALLOWED_USERS = new Set<string>([]);
-
 export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
   server = new McpServer({
-    name: "MyMLH MCP Server",
-    version: "1.0.0",
+    name,
+    version,
   });
 
   // Refresh upstream MyMLH token using refresh_token; persists props when successful
@@ -117,11 +115,10 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
         if (!json || !json.access_token) {
           return { content: [{ type: "text", text: "Failed to refresh token" }] };
         }
-        const { accessToken, refreshToken, tokenType, scope, expiresIn, accessTokenIssuedAt } = this.props;
+        const { accessToken, tokenType, scope, expiresIn, accessTokenIssuedAt } = this.props;
         const expires_at = accessTokenIssuedAt && expiresIn ? accessTokenIssuedAt + expiresIn : undefined;
         const payload = {
           access_token: accessToken,
-          refresh_token: refreshToken,
           token_type: tokenType,
           scope,
           expires_in: expiresIn,
@@ -133,15 +130,14 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
     );
 
     // MyMLH: Inspect current token details
-    this.server.tool("mymlh_get_token_details", "Return current MyMLH access/refresh token details", {}, async () => {
+    this.server.tool("mymlh_get_token_details", "Return current MyMLH access token details", {}, async () => {
       if (!this.props.accessToken) {
         return { content: [{ type: "text", text: "No access token available" }] };
       }
-      const { accessToken, refreshToken, tokenType, scope, expiresIn, accessTokenIssuedAt } = this.props;
+      const { accessToken, tokenType, scope, expiresIn, accessTokenIssuedAt } = this.props;
       const expires_at = accessTokenIssuedAt && expiresIn ? accessTokenIssuedAt + expiresIn : undefined;
       const payload = {
         access_token: accessToken,
-        refresh_token: refreshToken,
         token_type: tokenType,
         scope,
         expires_in: expiresIn,

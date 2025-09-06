@@ -1,120 +1,175 @@
-# Model Context Protocol (MCP) Server + MyMLH OAuth v4
+![mymlh-mcp-server](https://socialify.git.ci/wei/mymlh-mcp-server/image?description=1&font=Bitter&logo=https%3A%2F%2Fstatic.mlh.io%2Fbrand-assets%2Flogo%2Fofficial%2Fmlh-logo-color.svg&name=1&theme=Light)
 
-This is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) server for Cloudflare Workers that supports remote MCP connections, with MyMLH OAuth v4 built-in.
+[![MCP Server](https://img.shields.io/badge/MCP-Remote_HTTP_%20_Server-7B61FF)](https://modelcontextprotocol.io/docs/concepts/transports#http-streaming)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/workers/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Built with Hono](https://img.shields.io/badge/Built_with-Hono-ff4b4b?logo=hono)](https://hono.dev/)
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://wei.mit-license.org)
 
-You can deploy it to your own Cloudflare account and, after you create your MyMLH application, you'll have a fully functional remote MCP server. Users connect by signing in with their MyMLH account and granting scopes.
+A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) server that provides secure, OAuth-authenticated access to [MyMLH](https://my.mlh.io/). This server enables AI assistants and MCP clients to interact with the MyMLH API on behalf of users.
 
-It uses the [`@cloudflare/workers-oauth-provider`](https://github.com/cloudflare/workers-oauth-provider) library to implement the OAuth 2.0 server for MCP clients, and acts as an OAuth client to MyMLH.
+## Features
 
-The MCP server (powered by [Cloudflare Workers](https://developers.cloudflare.com/workers/)):
+- **Secure Authentication**: Implements [MyMLH v4 API with OAuth](https://my.mlh.io/developers/docs) for robust and secure user authentication.
+- **User Data Access**: Provides tools to fetch a user's MyMLH profile, education, employment history, and more.
+- **Automatic Token Management**: Handles token refresh and secure storage automatically.
+- **Cloudflare Workers**: Built to run on the edge for low-latency, scalable performance.
+- **Easy Deployment**: Can be deployed to your own Cloudflare account in minutes.
 
-- Acts as OAuth _Server_ to your MCP clients
-- Acts as OAuth _Client_ to your OAuth provider (MyMLH)
+## Quick Start
 
-## Getting Started
+You can connect to our publicly hosted instance using any MCP client that supports the [Remote HTTP transport with OAuth](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization).
 
-Clone the repo directly & install dependencies: `npm install`.
+**Endpoint**: `https://mymlh-mcp.git.ci/mcp`
 
-This project is intended for production deployment.
+### Install MCP Server
 
-### For Production
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_MCP-0098FF)](vscode:mcp/install?%7B%22name%22%3A%22mymlh%22%2C%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fmymlh-mcp.git.ci%2Fmcp%22%7D)
+[![Install in Cursor](https://img.shields.io/badge/Cursor-Install_MCP-000000)](https://cursor.com/en/install-mcp?name=mymlh&config=eyJ1cmwiOiJodHRwczovL215bWxoLW1jcC5naXQuY2kvbWNwIn0%3D)
 
-Create a new MyMLH Application in the MLH developer portal:
+Here are examples for common MCP clients:
 
-- Homepage URL: `https://<your-worker>.<your-subdomain>.workers.dev`
-- Authorization callback URL: `https://<your-worker>.<your-subdomain>.workers.dev/callback`
-- Note your Client ID and Client Secret.
-- Set secrets via Wrangler:
+**VS Code:**
 
-```bash
-wrangler secret put MYMLH_CLIENT_ID
-wrangler secret put MYMLH_CLIENT_SECRET
-wrangler secret put COOKIE_ENCRYPTION_KEY # e.g. openssl rand -hex 32
+```json
+{
+  "servers": {
+    "mymlh": {
+      "type": "http",
+      "url": "https://mymlh-mcp.git.ci/mcp"
+    }
+  }
+}
 ```
 
-> [!IMPORTANT]
-> When you create the first secret, Wrangler will ask if you want to create a new Worker. Submit "Y" to create a new Worker and save the secret.
+**Cursor and many clients:**
 
-#### Set up a KV namespace
-
-- Create the KV namespace:
-  `wrangler kv namespace create "OAUTH_KV"`
-- Update the Wrangler file with the KV ID
-
-#### Deploy & Test
-
-Deploy the MCP server to make it available on your workers.dev domain
-` wrangler deploy`
-
-Test the server using [Inspector](https://modelcontextprotocol.io/docs/tools/inspector):
-
-```
-npx @modelcontextprotocol/inspector@latest
+```json
+{
+  "mcpServers": {
+    "mymlh": {
+      "url": "https://mymlh-mcp.git.ci/mcp"
+    }
+  }
+}
 ```
 
-Enter `https://<your-worker>.<your-subdomain>.workers.dev/mcp` and hit connect. Once you go through the authentication flow, you'll see the tools working.
+**Windsurf and many clients:**
 
-You now have a remote MCP server deployed!
-
-### Access Control
-
-This MCP server uses MyMLH OAuth for authentication. All authenticated users can access the MyMLH tools. You can restrict sensitive tools by adding user ids or emails to `ALLOWED_USERS` in `src/index.ts`.
-
-### Access from MCP clients
-
-Once the tools show up in the interface of your chosen MCP client, you can ask it to use them. For example: "Fetch my MyMLH user and include education and employment".
-
-### For Local Development
-
-To test locally, create a second MyMLH application with:
-
-- Homepage URL: `http://localhost:8788`
-- Authorization callback URL: `http://localhost:8788/callback`
-- Create `.dev.vars` in your project root with:
-
-```
-MYMLH_CLIENT_ID=your_dev_mylmh_client_id
-MYMLH_CLIENT_SECRET=your_dev_mylmh_client_secret
-COOKIE_ENCRYPTION_KEY=your_cookie_key
+```json
+{
+  "mcpServers": {
+    "mymlh": {
+      "serverUrl": "https://mymlh-mcp.git.ci/mcp"
+    }
+  }
+}
 ```
 
-#### Develop & Test
+**Augment Code:**
 
-Run the server locally to make it available at `http://localhost:8788`
-`wrangler dev`
+```json
+{
+  "mcpServers": {
+    "mymlh": {
+      "url": "https://mymlh-mcp.git.ci/mcp",
+      "type": "http"
+    }
+  }
+}
+```
 
-To test the local server, enter `http://localhost:8788/mcp` into Inspector and hit connect. Once you follow the prompts, you'll be able to "List Tools".
+**Claude Code:**
 
-#### MCP Clients
+```sh
+claude mcp add --transport http mymlh https://mymlh-mcp.git.ci/mcp
+```
 
-Consult your MCP client's documentation for how to connect to an HTTP MCP server endpoint at `/mcp`.
+**Gemini CLI:**
 
-You can connect your MCP server to other MCP clients like Windsurf by opening the client's configuration file, adding the same JSON that was used for the Claude setup, and restarting the MCP client.
+_Gemini currently only supports the deprecated SSE protocol._
 
-## How does it work?
+```json
+{
+  "mcpServers": {
+    "mymlh": {
+      "url": "https://mymlh-mcp.git.ci/sse"
+    }
+  }
+}
+```
 
-#### OAuth Provider
+**Roo Code, Cline:**
 
-The OAuth Provider library serves as a complete OAuth 2.1 server implementation for Cloudflare Workers. It handles the complexities of the OAuth flow, including token issuance, validation, and management. In this project, it plays the dual role of:
+Even though these clients support streamable HTTP, they do not yet support the OAuth authentication flow. Please use the fallback option below. See open feature requests for [Roo Code](https://github.com/RooCodeInc/Roo-Code/issues/7296), [Cline](https://github.com/cline/cline/issues/4523).
 
-- Authenticating MCP clients that connect to your server
-- Managing the connection to MyMLH's OAuth services
-- Securely storing tokens and authentication state in KV storage
+For other clients, please consult their documentation for connecting to an MCP server. If you see 401 errors, the client likely does not supports the [Remote HTTP transport with OAuth](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization) and you will need to use the fallback option below.
 
-#### Durable MCP
+### Fallback Option
 
-Durable MCP extends the base MCP functionality with Cloudflare's Durable Objects, providing:
+For environments where Remote HTTP with OAuth is not supported, you may fallback to stdio transport with [`mcp-remote`](https://www.npmjs.com/package/mcp-remote). This wraps the hosted MCP server into a local stdio interface, forwarding requests over HTTP behind the scenes to ensure compatibility.
 
-- Persistent state management for your MCP server
-- Secure storage of authentication context between requests
-- Access to authenticated user information via `this.props`
-- Support for conditional tool availability based on user identity
+Example `mcp-remote` configuration snippet:
 
-#### MCP Remote
+```json
+{
+  "mcpServers": {
+    "mymlh": {
+      "command": "mcp-remote",
+      "args": [
+        "https://mymlh-mcp.git.ci/mcp"
+      ]
+    }
+  }
+}
+```
 
-The MCP libraries enable your server to expose tools that can be invoked by MCP clients like the Inspector. It:
+## Available Tools
 
-- Defines the protocol for communication between clients and your server
-- Provides a structured way to define tools
-- Handles serialization and deserialization of requests and responses
-- Connects over the Streamable HTTP protocol at `/mcp`
+Once connected and authenticated, you can use the following tools:
+
+- **Get User Info**: Fetches your complete MyMLH profile.
+- **Get Token Details**: Inspects the details of your current authentication token.
+- **Refresh Token**: Manually refreshes your authentication token.
+
+### Testing MCP Inspector
+
+You can test the remote MCP server using the [Model Context Protocol Inspector](https://modelcontextprotocol.io/docs/tools/inspector).
+
+1.  Run the Inspector from your terminal:
+    ```bash
+    npx @modelcontextprotocol/inspector@latest
+    ```
+2.  Enter the server URL: `https://mymlh-mcp.git.ci/mcp` and click "Connect".
+3.  Follow the authentication flow to connect and test the tools.
+
+### Testing with Cloudflare AI Playground
+
+You can also test the server directly using the [Cloudflare Workers AI LLM Playground](https://playground.ai.cloudflare.com/).
+
+1.  Go to the playground link.
+2.  Enter the server URL: `https://mymlh-mcp.git.ci/mcp`
+3.  Follow the authentication flow to connect and test the tools.
+
+### Example Usage
+
+You can interact with the MyMLH MCP server using natural language in your AI assistant:
+
+- "Get my MyMLH user info."
+- "Show me my MyMLH profile."
+- "Generate a resume using my MyMLH profile."
+- "Create a GitHub profile README using my MyMLH data."
+
+## Deploying Your Own Instance
+
+For full control, you can deploy your own instance to Cloudflare. See the [Deployment Guide](DEPLOYMENT.md) for detailed instructions.
+
+## Contributing
+
+We welcome contributions! Whether you're fixing a bug, adding a feature, or improving documentation, your help is appreciated.
+
+Please read our [Contributing Guide](CONTRIBUTING.md) to get started.
+
+## License
+
+[MIT](https://wei.mit-license.org)
