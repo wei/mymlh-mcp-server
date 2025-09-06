@@ -69,7 +69,7 @@ export async function fetchUpstreamAuthToken({
       redirect_uri,
     }).toString(),
     headers: {
-      "Accept": "application/json",
+      Accept: "application/json",
       "Content-Type": "application/x-www-form-urlencoded",
     },
     method: "POST",
