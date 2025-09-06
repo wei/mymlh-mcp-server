@@ -84,6 +84,7 @@ async function verifySignature(key: CryptoKey, signatureHex: string, data: strin
   const enc = new TextEncoder();
   try {
     // Convert hex signature back to ArrayBuffer
+    // biome-ignore lint/style/noNonNullAssertion: This is a valid assertion
     const signatureBytes = new Uint8Array(signatureHex.match(/.{1,2}/g)!.map((byte) => Number.parseInt(byte, 16)));
     return await crypto.subtle.verify("HMAC", key, signatureBytes.buffer, enc.encode(data));
   } catch (e) {
@@ -155,7 +156,11 @@ async function getApprovedClientsFromCookie(cookieHeader: string | null, secret:
  * @param cookieSecret - The secret key used to sign/verify the approval cookie.
  * @returns A promise resolving to true if the client ID is in the list of approved clients in a valid cookie, false otherwise.
  */
-export async function clientIdAlreadyApproved(request: Request, clientId: string, cookieSecret: string): Promise<boolean> {
+export async function clientIdAlreadyApproved(
+  request: Request,
+  clientId: string,
+  cookieSecret: string,
+): Promise<boolean> {
   if (!clientId) return false;
   const cookieHeader = request.headers.get("Cookie");
   const approvedClients = await getApprovedClientsFromCookie(cookieHeader, cookieSecret);
@@ -242,7 +247,8 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
   const contacts = client?.contacts && client.contacts.length > 0 ? sanitizeHtml(client.contacts.join(", ")) : "";
 
   // Get redirect URIs
-  const redirectUris = client?.redirectUris && client.redirectUris.length > 0 ? client.redirectUris.map((uri) => sanitizeHtml(uri)) : [];
+  const redirectUris =
+    client?.redirectUris && client.redirectUris.length > 0 ? client.redirectUris.map((uri) => sanitizeHtml(uri)) : [];
 
   // Generate HTML for the approval dialog
   const htmlContent = `
@@ -262,10 +268,10 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
             --background-color: #fff;
             --card-shadow: 0 8px 36px 8px rgba(0, 0, 0, 0.1);
           }
-          
+
           body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
-                         Helvetica, Arial, sans-serif, "Apple Color Emoji", 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                         Helvetica, Arial, sans-serif, "Apple Color Emoji",
                          "Segoe UI Emoji", "Segoe UI Symbol";
             line-height: 1.6;
             color: var(--text-color);
@@ -273,32 +279,32 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
             margin: 0;
             padding: 0;
           }
-          
+
           .container {
             max-width: 600px;
             margin: 2rem auto;
             padding: 1rem;
           }
-          
+
           .precard {
             padding: 2rem;
             text-align: center;
           }
-          
+
           .card {
             background-color: var(--background-color);
             border-radius: 8px;
             box-shadow: var(--card-shadow);
             padding: 2rem;
           }
-          
+
           .header {
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 1.5rem;
           }
-          
+
           .logo {
             width: 48px;
             height: 48px;
@@ -306,13 +312,13 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
             border-radius: 8px;
             object-fit: contain;
           }
-          
+
           .title {
             margin: 0;
             font-size: 1.3rem;
             font-weight: 400;
           }
-          
+
           .alert {
             margin: 0;
             font-size: 1.5rem;
@@ -320,62 +326,62 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
             margin: 1rem 0;
             text-align: center;
           }
-          
+
           .description {
             color: #555;
           }
-          
+
           .client-info {
             border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 1rem 1rem 0.5rem;
             margin-bottom: 1.5rem;
           }
-          
+
           .client-name {
             font-weight: 600;
             font-size: 1.2rem;
             margin: 0 0 0.5rem 0;
           }
-          
+
           .client-detail {
             display: flex;
             margin-bottom: 0.5rem;
             align-items: baseline;
           }
-          
+
           .detail-label {
             font-weight: 500;
             min-width: 120px;
           }
-          
+
           .detail-value {
             font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
             word-break: break-all;
           }
-          
+
           .detail-value a {
             color: inherit;
             text-decoration: underline;
           }
-          
+
           .detail-value.small {
             font-size: 0.8em;
           }
-          
+
           .external-link-icon {
             font-size: 0.75em;
             margin-left: 0.25rem;
             vertical-align: super;
           }
-          
+
           .actions {
             display: flex;
             justify-content: flex-end;
             gap: 1rem;
             margin-top: 2rem;
           }
-          
+
           .button {
             padding: 0.75rem 1.5rem;
             border-radius: 6px;
@@ -384,42 +390,42 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
             border: none;
             font-size: 1rem;
           }
-          
+
           .button-primary {
             background-color: var(--primary-color);
             color: white;
           }
-          
+
           .button-secondary {
             background-color: transparent;
             border: 1px solid var(--border-color);
             color: var(--text-color);
           }
-          
+
           /* Responsive adjustments */
           @media (max-width: 640px) {
             .container {
               margin: 1rem auto;
               padding: 0.5rem;
             }
-            
+
             .card {
               padding: 1.5rem;
             }
-            
+
             .client-detail {
               flex-direction: column;
             }
-            
+
             .detail-label {
               min-width: unset;
               margin-bottom: 0.25rem;
             }
-            
+
             .actions {
               flex-direction: column;
             }
-            
+
             .button {
               width: 100%;
             }
@@ -433,14 +439,14 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
               ${logoUrl ? `<img src="${logoUrl}" alt="${serverName} Logo" class="logo">` : ""}
             <h1 class="title"><strong>${serverName}</strong></h1>
             </div>
-            
+
             ${serverDescription ? `<p class="description">${serverDescription}</p>` : ""}
           </div>
-            
+
           <div class="card">
-            
+
             <h2 class="alert"><strong>${clientName || "A new MCP Client"}</strong> is requesting access</h1>
-            
+
             <div class="client-info">
               <div class="client-detail">
                 <div class="detail-label">Name:</div>
@@ -448,7 +454,7 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
                   ${clientName}
                 </div>
               </div>
-              
+
               ${
                 clientUri
                   ? `
@@ -463,7 +469,7 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
               `
                   : ""
               }
-              
+
               ${
                 policyUri
                   ? `
@@ -478,7 +484,7 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
               `
                   : ""
               }
-              
+
               ${
                 tosUri
                   ? `
@@ -493,7 +499,7 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
               `
                   : ""
               }
-              
+
               ${
                 redirectUris.length > 0
                   ? `
@@ -506,7 +512,7 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
               `
                   : ""
               }
-              
+
               ${
                 contacts
                   ? `
@@ -518,12 +524,12 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
                   : ""
               }
             </div>
-            
+
             <p>This MCP Client is requesting to be authorized on ${serverName}. If you approve, you will be redirected to complete authentication.</p>
-            
+
             <form method="post" action="${new URL(request.url).pathname}">
               <input type="hidden" name="state" value="${encodedState}">
-              
+
               <div class="actions">
                 <button type="button" class="button button-secondary" onclick="window.history.back()">Cancel</button>
                 <button type="submit" class="button button-primary">Approve</button>
@@ -616,5 +622,10 @@ export async function parseRedirectApproval(request: Request, cookieSecret: stri
  * @returns A safe string with HTML special characters escaped
  */
 function sanitizeHtml(unsafe: string): string {
-  return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }

@@ -79,7 +79,7 @@ export async function fetchUpstreamAuthToken({
     return [null, new Response("Failed to fetch access token", { status: 500 })];
   }
   let accessToken: string | null = null;
-  let raw: MyMLHTokenResponse | undefined = (await resp.json()) as MyMLHTokenResponse;
+  const raw: MyMLHTokenResponse | undefined = (await resp.json()) as MyMLHTokenResponse;
   accessToken = raw.access_token ?? null;
   if (!accessToken) {
     return [null, new Response("Missing access token", { status: 400 })];

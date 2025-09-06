@@ -2,7 +2,7 @@ import OAuthProvider from "@cloudflare/workers-oauth-provider";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { McpAgent } from "agents/mcp";
 import { MyMLHHandler } from "./mymlh-handler";
-import type { Props, MyMLHUser } from "./utils";
+import type { MyMLHUser, Props } from "./utils";
 
 // You can optionally gate tools to specific users by id or email (left empty by default)
 const ALLOWED_USERS = new Set<string>([]);
@@ -88,7 +88,8 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
   async init() {
     // MyMLH: Get current user info
     this.server.tool("mymlh_get_user_info", "Fetch current MyMLH user", {}, async () => {
-      const url = "https://api.mlh.com/v4/users/me?expand[]=education&expand[]=professional_experience&expand[]=address";
+      const url =
+        "https://api.mlh.com/v4/users/me?expand[]=education&expand[]=professional_experience&expand[]=address";
 
       const resp = await this.fetchMyMLHWithAutoRefresh(url);
       if (!resp.ok) {
@@ -104,27 +105,32 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
     });
 
     // MyMLH: Refresh token
-    this.server.tool("mymlh_refresh_token", "Exchange MyMLH refresh_token for a new access token and persist it", {}, async () => {
-      if (!this.props.refreshToken) {
-        return { content: [{ type: "text", text: "No refresh token available" }] };
-      }
-      const json = await this.refreshUpstreamToken();
-      if (!json || !json.access_token) {
-        return { content: [{ type: "text", text: "Failed to refresh token" }] };
-      }
-      const { accessToken, refreshToken, tokenType, scope, expiresIn, accessTokenIssuedAt } = this.props;
-      const expires_at = accessTokenIssuedAt && expiresIn ? accessTokenIssuedAt + expiresIn : undefined;
-      const payload = {
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        token_type: tokenType,
-        scope,
-        expires_in: expiresIn,
-        issued_at: accessTokenIssuedAt,
-        expires_at,
-      };
-      return { content: [{ type: "text", text: JSON.stringify(payload) }] };
-    });
+    this.server.tool(
+      "mymlh_refresh_token",
+      "Exchange MyMLH refresh_token for a new access token and persist it",
+      {},
+      async () => {
+        if (!this.props.refreshToken) {
+          return { content: [{ type: "text", text: "No refresh token available" }] };
+        }
+        const json = await this.refreshUpstreamToken();
+        if (!json || !json.access_token) {
+          return { content: [{ type: "text", text: "Failed to refresh token" }] };
+        }
+        const { accessToken, refreshToken, tokenType, scope, expiresIn, accessTokenIssuedAt } = this.props;
+        const expires_at = accessTokenIssuedAt && expiresIn ? accessTokenIssuedAt + expiresIn : undefined;
+        const payload = {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          token_type: tokenType,
+          scope,
+          expires_in: expiresIn,
+          issued_at: accessTokenIssuedAt,
+          expires_at,
+        };
+        return { content: [{ type: "text", text: JSON.stringify(payload) }] };
+      },
+    );
 
     // MyMLH: Inspect current token details
     this.server.tool("mymlh_get_token_details", "Return current MyMLH access/refresh token details", {}, async () => {

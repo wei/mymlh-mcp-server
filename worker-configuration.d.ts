@@ -88,7 +88,7 @@ declare abstract class WorkerGlobalScope extends EventTarget<WorkerGlobalScopeEv
 }
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/console) */
 interface Console {
-  "assert"(condition?: boolean, ...data: any[]): void;
+  assert(condition?: boolean, ...data: any[]): void;
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/console/clear_static) */
   clear(): void;
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/console/count_static) */
@@ -316,13 +316,21 @@ declare function atob(data: string): string;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/setTimeout) */
 declare function setTimeout(callback: (...args: any[]) => void, msDelay?: number): number;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/setTimeout) */
-declare function setTimeout<Args extends any[]>(callback: (...args: Args) => void, msDelay?: number, ...args: Args): number;
+declare function setTimeout<Args extends any[]>(
+  callback: (...args: Args) => void,
+  msDelay?: number,
+  ...args: Args
+): number;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/clearTimeout) */
 declare function clearTimeout(timeoutId: number | null): void;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/setInterval) */
 declare function setInterval(callback: (...args: any[]) => void, msDelay?: number): number;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/setInterval) */
-declare function setInterval<Args extends any[]>(callback: (...args: Args) => void, msDelay?: number, ...args: Args): number;
+declare function setInterval<Args extends any[]>(
+  callback: (...args: Args) => void,
+  msDelay?: number,
+  ...args: Args
+): number;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/clearInterval) */
 declare function clearInterval(timeoutId: number | null): void;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/queueMicrotask) */
@@ -360,7 +368,7 @@ declare const performance: Performance;
 declare const Cloudflare: Cloudflare;
 declare const origin: string;
 declare const navigator: Navigator;
-interface TestController {}
+type TestController = {};
 interface ExecutionContext {
   waitUntil(promise: Promise<any>): void;
   passThroughOnException(): void;
@@ -371,8 +379,16 @@ type ExportedHandlerFetchHandler<Env = unknown, CfHostMetadata = unknown> = (
   env: Env,
   ctx: ExecutionContext,
 ) => Response | Promise<Response>;
-type ExportedHandlerTailHandler<Env = unknown> = (events: TraceItem[], env: Env, ctx: ExecutionContext) => void | Promise<void>;
-type ExportedHandlerTraceHandler<Env = unknown> = (traces: TraceItem[], env: Env, ctx: ExecutionContext) => void | Promise<void>;
+type ExportedHandlerTailHandler<Env = unknown> = (
+  events: TraceItem[],
+  env: Env,
+  ctx: ExecutionContext,
+) => void | Promise<void>;
+type ExportedHandlerTraceHandler<Env = unknown> = (
+  traces: TraceItem[],
+  env: Env,
+  ctx: ExecutionContext,
+) => void | Promise<void>;
 type ExportedHandlerTailStreamHandler<Env = unknown> = (
   event: TailStream.TailEvent<TailStream.Onset>,
   env: Env,
@@ -388,7 +404,11 @@ type ExportedHandlerQueueHandler<Env = unknown, Message = unknown> = (
   env: Env,
   ctx: ExecutionContext,
 ) => void | Promise<void>;
-type ExportedHandlerTestHandler<Env = unknown> = (controller: TestController, env: Env, ctx: ExecutionContext) => void | Promise<void>;
+type ExportedHandlerTestHandler<Env = unknown> = (
+  controller: TestController,
+  env: Env,
+  ctx: ExecutionContext,
+) => void | Promise<void>;
 interface ExportedHandler<Env = unknown, QueueHandlerMessage = unknown, CfHostMetadata = unknown> {
   fetch?: ExportedHandlerFetchHandler<Env, CfHostMetadata>;
   tail?: ExportedHandlerTailHandler<Env>;
@@ -412,7 +432,14 @@ declare abstract class PromiseRejectionEvent extends Event {
 declare abstract class Navigator {
   sendBeacon(
     url: string,
-    body?: ReadableStream | string | (ArrayBuffer | ArrayBufferView) | Blob | FormData | URLSearchParams | URLSearchParams,
+    body?:
+      | ReadableStream
+      | string
+      | (ArrayBuffer | ArrayBufferView)
+      | Blob
+      | FormData
+      | URLSearchParams
+      | URLSearchParams,
   ): boolean;
   readonly userAgent: string;
   readonly hardwareConcurrency: number;
@@ -688,7 +715,9 @@ type EventListener<EventType extends Event = Event> = (event: EventType) => void
 interface EventListenerObject<EventType extends Event = Event> {
   handleEvent(event: EventType): void;
 }
-type EventListenerOrEventListenerObject<EventType extends Event = Event> = EventListener<EventType> | EventListenerObject<EventType>;
+type EventListenerOrEventListenerObject<EventType extends Event = Event> =
+  | EventListener<EventType>
+  | EventListenerObject<EventType>;
 /**
  * EventTarget is a DOM interface implemented by objects that can receive events and may have listeners for them.
  *
@@ -856,7 +885,11 @@ interface BlobOptions {
  * [MDN Reference](https://developer.mozilla.org/docs/Web/API/File)
  */
 declare class File extends Blob {
-  constructor(bits: ((ArrayBuffer | ArrayBufferView) | string | Blob)[] | undefined, name: string, options?: FileOptions);
+  constructor(
+    bits: ((ArrayBuffer | ArrayBufferView) | string | Blob)[] | undefined,
+    name: string,
+    options?: FileOptions,
+  );
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/File/name) */
   get name(): string;
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/File/lastModified) */
@@ -908,9 +941,17 @@ declare abstract class Crypto {
    */
   get subtle(): SubtleCrypto;
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Crypto/getRandomValues) */
-  getRandomValues<T extends Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | BigInt64Array | BigUint64Array>(
-    buffer: T,
-  ): T;
+  getRandomValues<
+    T extends
+      | Int8Array
+      | Uint8Array
+      | Int16Array
+      | Uint16Array
+      | Int32Array
+      | Uint32Array
+      | BigInt64Array
+      | BigUint64Array,
+  >(buffer: T): T;
   /**
    * Available only in secure contexts.
    *
@@ -927,7 +968,11 @@ declare abstract class Crypto {
  */
 declare abstract class SubtleCrypto {
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/SubtleCrypto/encrypt) */
-  encrypt(algorithm: string | SubtleCryptoEncryptAlgorithm, key: CryptoKey, plainText: ArrayBuffer | ArrayBufferView): Promise<ArrayBuffer>;
+  encrypt(
+    algorithm: string | SubtleCryptoEncryptAlgorithm,
+    key: CryptoKey,
+    plainText: ArrayBuffer | ArrayBufferView,
+  ): Promise<ArrayBuffer>;
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/SubtleCrypto/decrypt) */
   decrypt(
     algorithm: string | SubtleCryptoEncryptAlgorithm,
@@ -935,7 +980,11 @@ declare abstract class SubtleCrypto {
     cipherText: ArrayBuffer | ArrayBufferView,
   ): Promise<ArrayBuffer>;
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/SubtleCrypto/sign) */
-  sign(algorithm: string | SubtleCryptoSignAlgorithm, key: CryptoKey, data: ArrayBuffer | ArrayBufferView): Promise<ArrayBuffer>;
+  sign(
+    algorithm: string | SubtleCryptoSignAlgorithm,
+    key: CryptoKey,
+    data: ArrayBuffer | ArrayBufferView,
+  ): Promise<ArrayBuffer>;
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/SubtleCrypto/verify) */
   verify(
     algorithm: string | SubtleCryptoSignAlgorithm,
@@ -960,7 +1009,11 @@ declare abstract class SubtleCrypto {
     keyUsages: string[],
   ): Promise<CryptoKey>;
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/SubtleCrypto/deriveBits) */
-  deriveBits(algorithm: string | SubtleCryptoDeriveKeyAlgorithm, baseKey: CryptoKey, length?: number | null): Promise<ArrayBuffer>;
+  deriveBits(
+    algorithm: string | SubtleCryptoDeriveKeyAlgorithm,
+    baseKey: CryptoKey,
+    length?: number | null,
+  ): Promise<ArrayBuffer>;
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/SubtleCrypto/importKey) */
   importKey(
     format: string,
@@ -1269,7 +1322,10 @@ declare class FormData {
   keys(): IterableIterator<string>;
   /* Returns a list of values in the list. */
   values(): IterableIterator<File | string>;
-  forEach<This = unknown>(callback: (this: This, value: File | string, key: string, parent: FormData) => void, thisArg?: This): void;
+  forEach<This = unknown>(
+    callback: (this: This, value: File | string, key: string, parent: FormData) => void,
+    thisArg?: This,
+  ): void;
   [Symbol.iterator](): IterableIterator<[key: string, value: File | string]>;
 }
 interface ContentOptions {
@@ -1375,7 +1431,10 @@ declare class Headers {
   append(name: string, value: string): void;
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Headers/delete) */
   delete(name: string): void;
-  forEach<This = unknown>(callback: (this: This, value: string, key: string, parent: Headers) => void, thisArg?: This): void;
+  forEach<This = unknown>(
+    callback: (this: This, value: string, key: string, parent: Headers) => void,
+    thisArg?: This,
+  ): void;
   /* Returns an iterator allowing to go through all key/value pairs contained in this object. */
   entries(): IterableIterator<[key: string, value: string]>;
   /* Returns an iterator allowing to go through all keys of the key/value pairs contained in this object. */
@@ -1541,20 +1600,25 @@ interface RequestInit<Cf = CfProperties> {
 }
 type Service<
   T extends
-    | (new (...args: any[]) => Rpc.WorkerEntrypointBranded)
+    | (new (
+        ...args: any[]
+      ) => Rpc.WorkerEntrypointBranded)
     | Rpc.WorkerEntrypointBranded
     | ExportedHandler<any, any, any>
     | undefined = undefined,
-> = T extends new (...args: any[]) => Rpc.WorkerEntrypointBranded
+> = T extends new (
+  ...args: any[]
+) => Rpc.WorkerEntrypointBranded
   ? Fetcher<InstanceType<T>>
   : T extends Rpc.WorkerEntrypointBranded
     ? Fetcher<T>
     : T extends Exclude<Rpc.EntrypointBranded, Rpc.WorkerEntrypointBranded>
       ? never
       : Fetcher<undefined>;
-type Fetcher<T extends Rpc.EntrypointBranded | undefined = undefined, Reserved extends string = never> = (T extends Rpc.EntrypointBranded
-  ? Rpc.Provider<T, Reserved | "fetch" | "connect">
-  : unknown) & {
+type Fetcher<
+  T extends Rpc.EntrypointBranded | undefined = undefined,
+  Reserved extends string = never,
+> = (T extends Rpc.EntrypointBranded ? Rpc.Provider<T, Reserved | "fetch" | "connect"> : unknown) & {
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
   connect(address: SocketAddress | string, options?: SocketOptions): Socket;
 };
@@ -1589,20 +1653,36 @@ interface KVNamespace<Key extends string = string> {
   get<ExpectedValue = unknown>(key: Array<Key>, type: "json"): Promise<Map<string, ExpectedValue | null>>;
   get(key: Array<Key>, options?: Partial<KVNamespaceGetOptions<undefined>>): Promise<Map<string, string | null>>;
   get(key: Array<Key>, options?: KVNamespaceGetOptions<"text">): Promise<Map<string, string | null>>;
-  get<ExpectedValue = unknown>(key: Array<Key>, options?: KVNamespaceGetOptions<"json">): Promise<Map<string, ExpectedValue | null>>;
+  get<ExpectedValue = unknown>(
+    key: Array<Key>,
+    options?: KVNamespaceGetOptions<"json">,
+  ): Promise<Map<string, ExpectedValue | null>>;
   list<Metadata = unknown>(options?: KVNamespaceListOptions): Promise<KVNamespaceListResult<Metadata, Key>>;
-  put(key: Key, value: string | ArrayBuffer | ArrayBufferView | ReadableStream, options?: KVNamespacePutOptions): Promise<void>;
+  put(
+    key: Key,
+    value: string | ArrayBuffer | ArrayBufferView | ReadableStream,
+    options?: KVNamespacePutOptions,
+  ): Promise<void>;
   getWithMetadata<Metadata = unknown>(
     key: Key,
     options?: Partial<KVNamespaceGetOptions<undefined>>,
   ): Promise<KVNamespaceGetWithMetadataResult<string, Metadata>>;
-  getWithMetadata<Metadata = unknown>(key: Key, type: "text"): Promise<KVNamespaceGetWithMetadataResult<string, Metadata>>;
+  getWithMetadata<Metadata = unknown>(
+    key: Key,
+    type: "text",
+  ): Promise<KVNamespaceGetWithMetadataResult<string, Metadata>>;
   getWithMetadata<ExpectedValue = unknown, Metadata = unknown>(
     key: Key,
     type: "json",
   ): Promise<KVNamespaceGetWithMetadataResult<ExpectedValue, Metadata>>;
-  getWithMetadata<Metadata = unknown>(key: Key, type: "arrayBuffer"): Promise<KVNamespaceGetWithMetadataResult<ArrayBuffer, Metadata>>;
-  getWithMetadata<Metadata = unknown>(key: Key, type: "stream"): Promise<KVNamespaceGetWithMetadataResult<ReadableStream, Metadata>>;
+  getWithMetadata<Metadata = unknown>(
+    key: Key,
+    type: "arrayBuffer",
+  ): Promise<KVNamespaceGetWithMetadataResult<ArrayBuffer, Metadata>>;
+  getWithMetadata<Metadata = unknown>(
+    key: Key,
+    type: "stream",
+  ): Promise<KVNamespaceGetWithMetadataResult<ReadableStream, Metadata>>;
   getWithMetadata<Metadata = unknown>(
     key: Key,
     options: KVNamespaceGetOptions<"text">,
@@ -1731,7 +1811,11 @@ declare abstract class R2Bucket {
       onlyIf: R2Conditional | Headers;
     },
   ): Promise<R2Object | null>;
-  put(key: string, value: ReadableStream | ArrayBuffer | ArrayBufferView | string | null | Blob, options?: R2PutOptions): Promise<R2Object>;
+  put(
+    key: string,
+    value: ReadableStream | ArrayBuffer | ArrayBufferView | string | null | Blob,
+    options?: R2PutOptions,
+  ): Promise<R2Object>;
   createMultipartUpload(key: string, options?: R2MultipartOptions): Promise<R2MultipartUpload>;
   resumeMultipartUpload(key: string, uploadId: string): R2MultipartUpload;
   delete(keys: string | string[]): Promise<void>;
@@ -2102,7 +2186,11 @@ declare class WritableStreamDefaultWriter<W = any> {
 }
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/TransformStream) */
 declare class TransformStream<I = any, O = any> {
-  constructor(transformer?: Transformer<I, O>, writableStrategy?: QueuingStrategy<I>, readableStrategy?: QueuingStrategy<O>);
+  constructor(
+    transformer?: Transformer<I, O>,
+    writableStrategy?: QueuingStrategy<I>,
+    readableStrategy?: QueuingStrategy<O>,
+  );
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/TransformStream/readable) */
   get readable(): ReadableStream<O>;
   /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/TransformStream/writable) */
@@ -2217,7 +2305,7 @@ interface TraceItem {
 interface TraceItemAlarmEventInfo {
   readonly scheduledTime: Date;
 }
-interface TraceItemCustomEventInfo {}
+type TraceItemCustomEventInfo = {};
 interface TraceItemScheduledEventInfo {
   readonly scheduledTime: number;
   readonly cron: string;
@@ -2407,13 +2495,20 @@ declare class URLSearchParams {
   keys(): IterableIterator<string>;
   /* Returns a list of values in the search params. */
   values(): IterableIterator<string>;
-  forEach<This = unknown>(callback: (this: This, value: string, key: string, parent: URLSearchParams) => void, thisArg?: This): void;
+  forEach<This = unknown>(
+    callback: (this: This, value: string, key: string, parent: URLSearchParams) => void,
+    thisArg?: This,
+  ): void;
   /*function toString() { [native code] } Returns a string containing a query string suitable for use in a URL. Does not include the question mark. */
   toString(): string;
   [Symbol.iterator](): IterableIterator<[key: string, value: string]>;
 }
 declare class URLPattern {
-  constructor(input?: string | URLPatternInit, baseURL?: string | URLPatternOptions, patternOptions?: URLPatternOptions);
+  constructor(
+    input?: string | URLPatternInit,
+    baseURL?: string | URLPatternOptions,
+    patternOptions?: URLPatternOptions,
+  );
   get protocol(): string;
   get username(): string;
   get password(): string;
@@ -4086,7 +4181,9 @@ declare abstract class Base_Ai_Cf_Baai_Bge_Reranker_Base {
   inputs: Ai_Cf_Baai_Bge_Reranker_Base_Input;
   postProcessedOutputs: Ai_Cf_Baai_Bge_Reranker_Base_Output;
 }
-type Ai_Cf_Qwen_Qwen2_5_Coder_32B_Instruct_Input = Qwen2_5_Coder_32B_Instruct_Prompt | Qwen2_5_Coder_32B_Instruct_Messages;
+type Ai_Cf_Qwen_Qwen2_5_Coder_32B_Instruct_Input =
+  | Qwen2_5_Coder_32B_Instruct_Prompt
+  | Qwen2_5_Coder_32B_Instruct_Messages;
 interface Qwen2_5_Coder_32B_Instruct_Prompt {
   /**
    * The input text prompt for the model to generate a response.
@@ -4600,7 +4697,9 @@ declare abstract class Base_Ai_Cf_Qwen_Qwq_32B {
   inputs: Ai_Cf_Qwen_Qwq_32B_Input;
   postProcessedOutputs: Ai_Cf_Qwen_Qwq_32B_Output;
 }
-type Ai_Cf_Mistralai_Mistral_Small_3_1_24B_Instruct_Input = Mistral_Small_3_1_24B_Instruct_Prompt | Mistral_Small_3_1_24B_Instruct_Messages;
+type Ai_Cf_Mistralai_Mistral_Small_3_1_24B_Instruct_Input =
+  | Mistral_Small_3_1_24B_Instruct_Prompt
+  | Mistral_Small_3_1_24B_Instruct_Messages;
 interface Mistral_Small_3_1_24B_Instruct_Prompt {
   /**
    * The input text prompt for the model to generate a response.
@@ -5824,7 +5923,16 @@ interface BasicImageTransformations {
    * preserve as much as possible around a point at 20% of the height of the
    * source image.
    */
-  gravity?: "face" | "left" | "right" | "top" | "bottom" | "center" | "auto" | "entropy" | BasicImageTransformationsGravityCoordinates;
+  gravity?:
+    | "face"
+    | "left"
+    | "right"
+    | "top"
+    | "bottom"
+    | "center"
+    | "auto"
+    | "entropy"
+    | BasicImageTransformationsGravityCoordinates;
   /**
    * Background color to add underneath the image. Applies only to images with
    * transparency (such as PNG). Accepts any CSS color (#RRGGBB, rgba(…),
@@ -6857,7 +6965,7 @@ declare abstract class D1PreparedStatement {
 // but this will ensure type checking on older versions still passes.
 // TypeScript's interface merging will ensure our empty interface is effectively
 // ignored when `Disposable` is included in the standard lib.
-interface Disposable {}
+type Disposable = {};
 /**
  * An email message that can be sent from a Worker.
  */
@@ -7149,9 +7257,11 @@ type EventContext<Env, P extends string, Data> = {
   params: Params<P>;
   data: Data;
 };
-type PagesFunction<Env = unknown, Params extends string = any, Data extends Record<string, unknown> = Record<string, unknown>> = (
-  context: EventContext<Env, Params, Data>,
-) => Response | Promise<Response>;
+type PagesFunction<
+  Env = unknown,
+  Params extends string = any,
+  Data extends Record<string, unknown> = Record<string, unknown>,
+> = (context: EventContext<Env, Params, Data>) => Response | Promise<Response>;
 type EventPluginContext<Env, P extends string, Data, PluginArgs> = {
   request: Request<unknown, IncomingRequestCfProperties<unknown>>;
   functionPath: string;
@@ -7295,7 +7405,10 @@ declare namespace Rpc {
     // Structured cloneables
     | BaseType
     // Structured cloneable composites
-    | Map<T extends Map<infer U, unknown> ? Serializable<U> : never, T extends Map<unknown, infer U> ? Serializable<U> : never>
+    | Map<
+        T extends Map<infer U, unknown> ? Serializable<U> : never,
+        T extends Map<unknown, infer U> ? Serializable<U> : never
+      >
     | Set<T extends Set<infer U> ? Serializable<U> : never>
     | ReadonlyArray<T extends ReadonlyArray<infer U> ? Serializable<U> : never>
     | {
@@ -7334,20 +7447,48 @@ declare namespace Rpc {
     | Headers;
   // Recursively rewrite all `Stubable` types with `Stub`s
   // prettier-ignore
-  type Stubify<T> = T extends Stubable ? Stub<T> : T extends Map<infer K, infer V> ? Map<Stubify<K>, Stubify<V>> : T extends Set<infer V> ? Set<Stubify<V>> : T extends Array<infer V> ? Array<Stubify<V>> : T extends ReadonlyArray<infer V> ? ReadonlyArray<Stubify<V>> : T extends BaseType ? T : T extends {
-        [key: string | number]: any;
-    } ? {
-        [K in keyof T]: Stubify<T[K]>;
-    } : T;
+  type Stubify<T> = T extends Stubable
+    ? Stub<T>
+    : T extends Map<infer K, infer V>
+      ? Map<Stubify<K>, Stubify<V>>
+      : T extends Set<infer V>
+        ? Set<Stubify<V>>
+        : T extends Array<infer V>
+          ? Array<Stubify<V>>
+          : T extends ReadonlyArray<infer V>
+            ? ReadonlyArray<Stubify<V>>
+            : T extends BaseType
+              ? T
+              : T extends {
+                    [key: string | number]: any;
+                  }
+                ? {
+                    [K in keyof T]: Stubify<T[K]>;
+                  }
+                : T;
   // Recursively rewrite all `Stub<T>`s with the corresponding `T`s.
   // Note we use `StubBase` instead of `Stub` here to avoid circular dependencies:
   // `Stub` depends on `Provider`, which depends on `Unstubify`, which would depend on `Stub`.
   // prettier-ignore
-  type Unstubify<T> = T extends StubBase<infer V> ? V : T extends Map<infer K, infer V> ? Map<Unstubify<K>, Unstubify<V>> : T extends Set<infer V> ? Set<Unstubify<V>> : T extends Array<infer V> ? Array<Unstubify<V>> : T extends ReadonlyArray<infer V> ? ReadonlyArray<Unstubify<V>> : T extends BaseType ? T : T extends {
-        [key: string | number]: unknown;
-    } ? {
-        [K in keyof T]: Unstubify<T[K]>;
-    } : T;
+  type Unstubify<T> = T extends StubBase<infer V>
+    ? V
+    : T extends Map<infer K, infer V>
+      ? Map<Unstubify<K>, Unstubify<V>>
+      : T extends Set<infer V>
+        ? Set<Unstubify<V>>
+        : T extends Array<infer V>
+          ? Array<Unstubify<V>>
+          : T extends ReadonlyArray<infer V>
+            ? ReadonlyArray<Unstubify<V>>
+            : T extends BaseType
+              ? T
+              : T extends {
+                    [key: string | number]: unknown;
+                  }
+                ? {
+                    [K in keyof T]: Unstubify<T[K]>;
+                  }
+                : T;
   type UnstubifyAll<A extends any[]> = {
     [I in keyof A]: Unstubify<A[I]>;
   };
@@ -7363,7 +7504,11 @@ declare namespace Rpc {
   // Technically, we use custom thenables here, but they quack like `Promise`s.
   // Intersecting with `(Maybe)Provider` allows pipelining.
   // prettier-ignore
-  type Result<R> = R extends Stubable ? Promise<Stub<R>> & Provider<R> : R extends Serializable<R> ? Promise<Stubify<R> & MaybeDisposable<R>> & MaybeProvider<R> : never;
+  type Result<R> = R extends Stubable
+    ? Promise<Stub<R>> & Provider<R>
+    : R extends Serializable<R>
+      ? Promise<Stubify<R> & MaybeDisposable<R>> & MaybeProvider<R>
+      : never;
   // Type for method or property on an RPC interface.
   // For methods, unwrap `Stub`s in parameters, and rewrite returns to be `Result`s.
   // Unwrapping `Stub`s allows calling with `Stubable` arguments.
@@ -7383,7 +7528,7 @@ declare namespace Rpc {
   };
 }
 declare namespace Cloudflare {
-  interface Env {}
+  type Env = {};
 }
 declare module "cloudflare:node" {
   export interface DefaultHandler {
@@ -7546,7 +7691,10 @@ declare namespace TailStream {
   }
   interface HibernatableWebSocketEventInfo {
     readonly type: "hibernatableWebSocket";
-    readonly info: HibernatableWebSocketEventInfoClose | HibernatableWebSocketEventInfoError | HibernatableWebSocketEventInfoMessage;
+    readonly info:
+      | HibernatableWebSocketEventInfoClose
+      | HibernatableWebSocketEventInfoError
+      | HibernatableWebSocketEventInfoMessage;
   }
   interface CustomEventInfo {
     readonly type: "custom";
@@ -7641,7 +7789,16 @@ declare namespace TailStream {
     readonly type: "attributes";
     readonly info: Attribute[];
   }
-  type EventType = Onset | Outcome | SpanOpen | SpanClose | DiagnosticChannelEvent | Exception | Log | Return | Attributes;
+  type EventType =
+    | Onset
+    | Outcome
+    | SpanOpen
+    | SpanClose
+    | DiagnosticChannelEvent
+    | Exception
+    | Log
+    | Return
+    | Attributes;
   interface TailEvent<Event extends EventType> {
     readonly invocationId: string;
     readonly spanId: string;

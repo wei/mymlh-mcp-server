@@ -1,6 +1,6 @@
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { Hono } from "hono";
-import { ALL_MYMLH_SCOPES, fetchUpstreamAuthToken, getUpstreamAuthorizeUrl, type MyMLHUser, type Props } from "./utils";
+import { ALL_MYMLH_SCOPES, type MyMLHUser, type Props, fetchUpstreamAuthToken, getUpstreamAuthorizeUrl } from "./utils";
 import { clientIdAlreadyApproved, parseRedirectApproval, renderApprovalDialog } from "./workers-oauth-utils";
 
 const app = new Hono<{ Bindings: Env & { OAUTH_PROVIDER: OAuthHelpers } }>();
@@ -37,7 +37,12 @@ app.post("/authorize", async (c) => {
   return redirectToMyMLH(c.req.raw, state.oauthReqInfo, c.env.MYMLH_CLIENT_ID, headers);
 });
 
-async function redirectToMyMLH(request: Request, oauthReqInfo: AuthRequest, client_id: string, headers: Record<string, string> = {}) {
+async function redirectToMyMLH(
+  request: Request,
+  oauthReqInfo: AuthRequest,
+  client_id: string,
+  headers: Record<string, string> = {},
+) {
   return new Response(null, {
     headers: {
       ...headers,
