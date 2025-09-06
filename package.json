@@ -1,5 +1,5 @@
 {
-  "name": "remote-mcp-github-oauth",
+  "name": "mymlh-mcp-server",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -7,7 +7,8 @@
     "dev": "wrangler dev",
     "start": "wrangler dev",
     "cf-typegen": "wrangler types",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prettier": "prettier --write ."
   },
   "dependencies": {
     "@cloudflare/workers-oauth-provider": "^0.0.6",
@@ -15,7 +16,6 @@
     "agents": "^0.0.113",
     "hono": "^4.9.5",
     "just-pick": "^4.2.0",
-    "octokit": "^5.0.3",
     "workers-mcp": "^0.0.13",
     "zod": "^3.25.76"
   },

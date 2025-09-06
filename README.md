@@ -1,144 +1,120 @@
-# Model Context Protocol (MCP) Server + Github OAuth
+# Model Context Protocol (MCP) Server + MyMLH OAuth v4
 
-This is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) server that supports remote MCP connections, with Github OAuth built-in.
+This is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) server for Cloudflare Workers that supports remote MCP connections, with MyMLH OAuth v4 built-in.
 
-You can deploy it to your own Cloudflare account, and after you create your own Github OAuth client app, you'll have a fully functional remote MCP server that you can build off. Users will be able to connect to your MCP server by signing in with their GitHub account.
+You can deploy it to your own Cloudflare account and, after you create your MyMLH application, you'll have a fully functional remote MCP server. Users connect by signing in with their MyMLH account and granting scopes.
 
-You can use this as a reference example for how to integrate other OAuth providers with an MCP server deployed to Cloudflare, using the [`workers-oauth-provider` library](https://github.com/cloudflare/workers-oauth-provider).
+It uses the [`@cloudflare/workers-oauth-provider`](https://github.com/cloudflare/workers-oauth-provider) library to implement the OAuth 2.0 server for MCP clients, and acts as an OAuth client to MyMLH.
 
-The MCP server (powered by [Cloudflare Workers](https://developers.cloudflare.com/workers/)): 
+The MCP server (powered by [Cloudflare Workers](https://developers.cloudflare.com/workers/)):
 
-* Acts as OAuth _Server_ to your MCP clients
-* Acts as OAuth _Client_ to your _real_ OAuth server (in this case, GitHub)
+- Acts as OAuth _Server_ to your MCP clients
+- Acts as OAuth _Client_ to your OAuth provider (MyMLH)
 
 ## Getting Started
 
 Clone the repo directly & install dependencies: `npm install`.
 
-Alternatively, you can use the command line below to get the remote MCP Server created on your local machine:
-```bash
-npm create cloudflare@latest -- my-mcp-server --template=cloudflare/ai/demos/remote-mcp-github-oauth
-```
+This project is intended for production deployment.
 
 ### For Production
-Create a new [GitHub OAuth App](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app): 
-- For the Homepage URL, specify `https://mcp-github-oauth.<your-subdomain>.workers.dev`
-- For the Authorization callback URL, specify `https://mcp-github-oauth.<your-subdomain>.workers.dev/callback`
-- Note your Client ID and generate a Client secret. 
-- Set secrets via Wrangler
+
+Create a new MyMLH Application in the MLH developer portal:
+
+- Homepage URL: `https://<your-worker>.<your-subdomain>.workers.dev`
+- Authorization callback URL: `https://<your-worker>.<your-subdomain>.workers.dev/callback`
+- Note your Client ID and Client Secret.
+- Set secrets via Wrangler:
+
 ```bash
-wrangler secret put GITHUB_CLIENT_ID
-wrangler secret put GITHUB_CLIENT_SECRET
-wrangler secret put COOKIE_ENCRYPTION_KEY # add any random string here e.g. openssl rand -hex 32
+wrangler secret put MYMLH_CLIENT_ID
+wrangler secret put MYMLH_CLIENT_SECRET
+wrangler secret put COOKIE_ENCRYPTION_KEY # e.g. openssl rand -hex 32
 ```
 
 > [!IMPORTANT]
 > When you create the first secret, Wrangler will ask if you want to create a new Worker. Submit "Y" to create a new Worker and save the secret.
 
 #### Set up a KV namespace
-- Create the KV namespace: 
-`wrangler kv namespace create "OAUTH_KV"`
+
+- Create the KV namespace:
+  `wrangler kv namespace create "OAUTH_KV"`
 - Update the Wrangler file with the KV ID
 
 #### Deploy & Test
-Deploy the MCP server to make it available on your workers.dev domain 
+
+Deploy the MCP server to make it available on your workers.dev domain
 ` wrangler deploy`
 
-Test the remote server using [Inspector](https://modelcontextprotocol.io/docs/tools/inspector): 
+Test the server using [Inspector](https://modelcontextprotocol.io/docs/tools/inspector):
 
 ```
 npx @modelcontextprotocol/inspector@latest
 ```
-Enter `https://mcp-github-oauth.<your-subdomain>.workers.dev/sse` and hit connect. Once you go through the authentication flow, you'll see the Tools working: 
 
-<img width="640" alt="image" src="https://github.com/user-attachments/assets/7973f392-0a9d-4712-b679-6dd23f824287" />
+Enter `https://<your-worker>.<your-subdomain>.workers.dev/mcp` and hit connect. Once you go through the authentication flow, you'll see the tools working.
 
-You now have a remote MCP server deployed! 
+You now have a remote MCP server deployed!
 
 ### Access Control
 
-This MCP server uses GitHub OAuth for authentication. All authenticated GitHub users can access basic tools like "add" and "userInfoOctokit".
+This MCP server uses MyMLH OAuth for authentication. All authenticated users can access the MyMLH tools. You can restrict sensitive tools by adding user ids or emails to `ALLOWED_USERS` in `src/index.ts`.
 
-The "generateImage" tool is restricted to specific GitHub users listed in the `ALLOWED_USERNAMES` configuration:
+### Access from MCP clients
 
-```typescript
-// Add GitHub usernames for image generation access
-const ALLOWED_USERNAMES = new Set([
-  'yourusername',
-  'teammate1'
-]);
-```
-
-### Access the remote MCP server from Claude Desktop
-
-Open Claude Desktop and navigate to Settings -> Developer -> Edit Config. This opens the configuration file that controls which MCP servers Claude can access.
-
-Replace the content with the following configuration. Once you restart Claude Desktop, a browser window will open showing your OAuth login page. Complete the authentication flow to grant Claude access to your MCP server. After you grant access, the tools will become available for you to use. 
-
-```
-{
-  "mcpServers": {
-    "math": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://mcp-github-oauth.<your-subdomain>.workers.dev/sse"
-      ]
-    }
-  }
-}
-```
-
-Once the Tools (under 🔨) show up in the interface, you can ask Claude to use them. For example: "Could you use the math tool to add 23 and 19?". Claude should invoke the tool and show the result generated by the MCP server.
+Once the tools show up in the interface of your chosen MCP client, you can ask it to use them. For example: "Fetch my MyMLH user and include education and employment".
 
 ### For Local Development
-If you'd like to iterate and test your MCP server, you can do so in local development. This will require you to create another OAuth App on GitHub: 
-- For the Homepage URL, specify `http://localhost:8788`
-- For the Authorization callback URL, specify `http://localhost:8788/callback`
-- Note your Client ID and generate a Client secret. 
-- Create a `.dev.vars` file in your project root with: 
+
+To test locally, create a second MyMLH application with:
+
+- Homepage URL: `http://localhost:8788`
+- Authorization callback URL: `http://localhost:8788/callback`
+- Create `.dev.vars` in your project root with:
+
 ```
-GITHUB_CLIENT_ID=your_development_github_client_id
-GITHUB_CLIENT_SECRET=your_development_github_client_secret
+MYMLH_CLIENT_ID=your_dev_mylmh_client_id
+MYMLH_CLIENT_SECRET=your_dev_mylmh_client_secret
+COOKIE_ENCRYPTION_KEY=your_cookie_key
 ```
 
 #### Develop & Test
+
 Run the server locally to make it available at `http://localhost:8788`
 `wrangler dev`
 
-To test the local server, enter `http://localhost:8788/sse` into Inspector and hit connect. Once you follow the prompts, you'll be able to "List Tools". 
+To test the local server, enter `http://localhost:8788/mcp` into Inspector and hit connect. Once you follow the prompts, you'll be able to "List Tools".
 
-#### Using Claude and other MCP Clients
+#### MCP Clients
 
-When using Claude to connect to your remote MCP server, you may see some error messages. This is because Claude Desktop doesn't yet support remote MCP servers, so it sometimes gets confused. To verify whether the MCP server is connected, hover over the 🔨 icon in the bottom right corner of Claude's interface. You should see your tools available there.
-
-#### Using Cursor and other MCP Clients
-
-To connect Cursor with your MCP server, choose `Type`: "Command" and in the `Command` field, combine the command and args fields into one (e.g. `npx mcp-remote https://<your-worker-name>.<your-subdomain>.workers.dev/sse`).
-
-Note that while Cursor supports HTTP+SSE servers, it doesn't support authentication, so you still need to use `mcp-remote` (and to use a STDIO server, not an HTTP one).
+Consult your MCP client's documentation for how to connect to an HTTP MCP server endpoint at `/mcp`.
 
 You can connect your MCP server to other MCP clients like Windsurf by opening the client's configuration file, adding the same JSON that was used for the Claude setup, and restarting the MCP client.
 
-## How does it work? 
+## How does it work?
 
 #### OAuth Provider
+
 The OAuth Provider library serves as a complete OAuth 2.1 server implementation for Cloudflare Workers. It handles the complexities of the OAuth flow, including token issuance, validation, and management. In this project, it plays the dual role of:
 
 - Authenticating MCP clients that connect to your server
-- Managing the connection to GitHub's OAuth services
+- Managing the connection to MyMLH's OAuth services
 - Securely storing tokens and authentication state in KV storage
 
 #### Durable MCP
+
 Durable MCP extends the base MCP functionality with Cloudflare's Durable Objects, providing:
+
 - Persistent state management for your MCP server
 - Secure storage of authentication context between requests
 - Access to authenticated user information via `this.props`
 - Support for conditional tool availability based on user identity
 
 #### MCP Remote
-The MCP Remote library enables your server to expose tools that can be invoked by MCP clients like the Inspector. It:
+
+The MCP libraries enable your server to expose tools that can be invoked by MCP clients like the Inspector. It:
+
 - Defines the protocol for communication between clients and your server
 - Provides a structured way to define tools
 - Handles serialization and deserialization of requests and responses
-- Maintains the Server-Sent Events (SSE) connection between clients and your server
+- Connects over the Streamable HTTP protocol at `/mcp`
