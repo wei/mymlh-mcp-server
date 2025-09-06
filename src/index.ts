@@ -62,8 +62,13 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
     const refreshThresholdSeconds = 60; // proactively refresh ~1 minute before expiry
 
     // Preemptive refresh window
+    let effectiveAccessToken = this.props.accessToken;
     if (expiresIn && now >= expAt - refreshThresholdSeconds) {
-      await this.refreshUpstreamToken();
+      const refreshed = await this.refreshUpstreamToken();
+      if (refreshed?.access_token) {
+        // Use the just-refreshed token immediately to avoid stale in-memory props
+        effectiveAccessToken = refreshed.access_token;
+      }
     }
 
     const withAuth = (token: string): RequestInit => ({
@@ -74,11 +79,12 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
       } as Record<string, string>,
     });
 
-    let resp = await fetch(url, withAuth(this.props.accessToken));
+    let resp = await fetch(url, withAuth(effectiveAccessToken));
 
     if (resp.status === 401) {
-      await this.refreshUpstreamToken();
-      resp = await fetch(url, withAuth(this.props.accessToken));
+      const refreshed = await this.refreshUpstreamToken();
+      const retryToken = refreshed?.access_token ?? this.props.accessToken;
+      resp = await fetch(url, withAuth(retryToken));
     }
     return resp;
   }
