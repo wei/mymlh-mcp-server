@@ -123,12 +123,17 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
         }
         const { accessToken, tokenType, scope, expiresIn, accessTokenIssuedAt } = this.props;
         const expires_at = accessTokenIssuedAt && expiresIn ? accessTokenIssuedAt + expiresIn : undefined;
+        const now = Math.floor(Date.now() / 1000);
+        const expires_in = expires_at ? Math.max(0, expires_at - now) : undefined;
         const payload = {
           access_token: accessToken,
           token_type: tokenType,
           scope,
-          expires_in: expiresIn,
           issued_at: accessTokenIssuedAt,
+          // the original TTL in seconds from MyMLH
+          ttl: expiresIn,
+          // expires_in is the remaining seconds until expiration (dynamic)
+          expires_in,
           expires_at,
         };
         return { content: [{ type: "text", text: JSON.stringify(payload) }] };
@@ -142,12 +147,17 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
       }
       const { accessToken, tokenType, scope, expiresIn, accessTokenIssuedAt } = this.props;
       const expires_at = accessTokenIssuedAt && expiresIn ? accessTokenIssuedAt + expiresIn : undefined;
+      const now = Math.floor(Date.now() / 1000);
+      const expires_in = expires_at ? Math.max(0, expires_at - now) : undefined;
       const payload = {
         access_token: accessToken,
         token_type: tokenType,
         scope,
-        expires_in: expiresIn,
         issued_at: accessTokenIssuedAt,
+        // the original TTL in seconds from MyMLH
+        ttl: expiresIn,
+        // expires_in is the remaining seconds until expiration (dynamic)
+        expires_in,
         expires_at,
       };
       return { content: [{ type: "text", text: JSON.stringify(payload) }] };
