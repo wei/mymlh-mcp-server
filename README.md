@@ -107,7 +107,7 @@ For other clients, please consult their documentation for connecting to an MCP s
 
 ### Fallback Option
 
-For environments where Remote HTTP with OAuth is not supported, you may fallback to stdio transport with [`mcp-remote`](https://www.npmjs.com/package/mcp-remote). This wraps the hosted MCP server into a local stdio interface, forwarding requests over HTTP behind the scenes to ensure compatibility.
+For environments where Remote HTTP with OAuth is not supported, you may fallback to stdio transport with [`mcp-remote`](https://www.npmjs.com/package/mcp-remote). This wraps the HTTP MCP server into a local stdio interface, forwarding requests over HTTP behind the scenes to ensure compatibility.
 
 Example `mcp-remote` configuration snippet:
 
@@ -115,8 +115,9 @@ Example `mcp-remote` configuration snippet:
 {
   "mcpServers": {
     "mymlh": {
-      "command": "mcp-remote",
+      "command": "npx",
       "args": [
+        "mcp-remote",
         "https://mymlh-mcp.git.ci/mcp"
       ]
     }
@@ -124,15 +125,19 @@ Example `mcp-remote` configuration snippet:
 }
 ```
 
+See [`mcp-remote` documentation](https://www.npmjs.com/package/mcp-remote#usage) for more details on usage.
+
 ## Available Tools
 
 Once connected and authenticated, you can use the following tools:
 
-- **Get User Info**: Fetches your complete MyMLH profile.
-- **Get Token Details**: Inspects the details of your current authentication token.
-- **Refresh Token**: Manually refreshes your authentication token.
+| Tool                      | Description                                                        |
+| ------------------------- | ------------------------------------------------------------------ |
+| `mymlh_get_user_info`     | Fetch current MyMLH user                                           |
+| `mymlh_get_token_details` | Return current MyMLH access token details                          |
+| `mymlh_refresh_token`     | Exchange MyMLH refresh_token for a new access token and persist it |
 
-### Testing MCP Inspector
+### Test with MCP Inspector
 
 You can test the remote MCP server using the [Model Context Protocol Inspector](https://modelcontextprotocol.io/docs/tools/inspector).
 
