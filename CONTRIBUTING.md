@@ -77,6 +77,8 @@ This project uses [Biome](https://biomejs.dev/) for code formatting and linting.
 npm run lint
 ```
 
+Git hooks are managed by [Lefthook](https://github.com/evilmartians/lefthook). Running `npm install` will install hooks via the `prepare` script. Hooks run Biome formatting + lint on staged files at pre-commit and a full Biome check at pre-push using the local Biome package (no `npx`).
+
 ### Commit Messages
 
 We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification. Please ensure your commit messages are descriptive and follow this format. This helps us automate releases and generate changelogs.

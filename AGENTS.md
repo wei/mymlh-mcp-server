@@ -24,7 +24,7 @@ Examples:
 - Language: TypeScript (strict). Indent 2 spaces, line width 120, double quotes (Biome enforced).
 - Filenames: kebab-case (e.g., `mymlh-handler.ts`).
 - Symbols: camelCase for vars/functions; PascalCase for types/classes (e.g., `MyMCP`, `MyMLHUser`); snake_case for constants and MCP tool names.
-- Run `npm run lint` before committing; Husky + lint-staged auto-format staged files.
+- Run `npm run lint` before committing; Lefthook runs Biome on staged files (pre-commit) and full project (pre-push).
 
 ## Testing Guidelines
 - Primary: run `npm run dev`, then exercise tools with MCP Inspector (`npx @modelcontextprotocol/inspector`) against `http://localhost:8788/mcp`.
