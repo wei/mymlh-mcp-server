@@ -81,6 +81,24 @@ npm run lint
 
 We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification. Please ensure your commit messages are descriptive and follow this format. This helps us automate releases and generate changelogs.
 
+### Documentation Maintenance
+
+Always keep documentation current with code changes. When you modify behavior, routes, tools, environment variables, config, build commands, or UI (approval dialog), update all relevant Markdown files in the same PR. At a minimum, review and update:
+
+- `AGENTS.md` — process, conventions, and expectations.
+- `README.md` — overview, setup, usage, endpoints.
+- `CONTRIBUTING.md` — workflow and checklists.
+- `DEPLOYMENT.md` — Wrangler commands, secrets, environments.
+- `CODE_OF_CONDUCT.md` — only if policy/links change.
+- Any `*.md` and other repo Markdown (e.g., `SECURITY.md`, `CHANGELOG.md`).
+
+Also synchronize examples when renaming or changing:
+
+- Routes/endpoints (e.g., `/mcp`, `/authorize`, callback paths) and tool names.
+- Environment variables or secret names in `.dev.vars(.example)` and Wrangler.
+- `package.json` scripts and documented usage.
+- HTML approval dialog parameters/behavior in `workers-oauth-utils.ts`.
+
 ### Pull Request Process
 
 1.  Create a new branch for your feature or bug fix:
@@ -94,6 +112,13 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
     ```
 4.  Open a pull request from your fork to the main repository.
 5.  In your pull request description, please explain the changes you've made and why.
+
+#### Pre‑PR Checklist
+
+- `npm run type-check && npm run lint` pass locally.
+- Local OAuth flow verified (`/authorize` → callback → tools work via Inspector).
+- Documentation updated as needed (e.g., `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `DEPLOYMENT.md`).
+- Include a brief “Docs updated” note listing which docs changed and why.
 
 ## Code of Conduct
 
