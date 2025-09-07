@@ -6,7 +6,14 @@ import { clientIdAlreadyApproved, parseRedirectApproval, renderApprovalDialog } 
 const app = new Hono<{ Bindings: Env & { OAUTH_PROVIDER: OAuthHelpers } }>();
 
 app.get("/authorize", async (c) => {
-  const oauthReqInfo = await c.env.OAUTH_PROVIDER.parseAuthRequest(c.req.raw);
+  let oauthReqInfo: AuthRequest;
+  try {
+    oauthReqInfo = await c.env.OAUTH_PROVIDER.parseAuthRequest(c.req.raw);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Invalid authorization request";
+    return c.text(`Invalid authorization request: ${msg}`, 400);
+  }
+
   const { clientId } = oauthReqInfo;
   if (!clientId) {
     return c.text("Invalid request", 400);
@@ -29,12 +36,16 @@ app.get("/authorize", async (c) => {
 
 app.post("/authorize", async (c) => {
   // Validates form submission, extracts state, and generates Set-Cookie headers to skip approval dialog next time
-  const { state, headers } = await parseRedirectApproval(c.req.raw, c.env.COOKIE_ENCRYPTION_KEY);
-  if (!state.oauthReqInfo) {
-    return c.text("Invalid request", 400);
+  try {
+    const { state, headers } = await parseRedirectApproval(c.req.raw, c.env.COOKIE_ENCRYPTION_KEY);
+    if (!state.oauthReqInfo) {
+      return c.text("Invalid request", 400);
+    }
+    return redirectToMyMLH(c.req.raw, state.oauthReqInfo, c.env.MYMLH_CLIENT_ID, headers);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Failed to process approval";
+    return c.text(`Invalid approval submission: ${msg}`, 400);
   }
-
-  return redirectToMyMLH(c.req.raw, state.oauthReqInfo, c.env.MYMLH_CLIENT_ID, headers);
 });
 
 async function redirectToMyMLH(
