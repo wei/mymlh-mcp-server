@@ -8,18 +8,21 @@
   "files": {
     "ignoreUnknown": false
   },
+  "overrides": [
+    {
+      "includes": ["**/worker-configuration.d.ts"],
+      "formatter": { "enabled": false },
+      "linter": { "enabled": false }
+    }
+  ],
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 120
   },
-  "organizeImports": {
-    "enabled": true
-  },
   "linter": {
     "enabled": true,
-    "ignore": ["**/worker-configuration.d.ts"],
     "rules": {
       "recommended": true,
       "suspicious": {
