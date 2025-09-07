@@ -1,6 +1,6 @@
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { Hono } from "hono";
-import { ALL_MYMLH_SCOPES, type MyMLHUser, type Props, fetchUpstreamAuthToken, getUpstreamAuthorizeUrl } from "./utils";
+import { ALL_MYMLH_SCOPES, fetchUpstreamAuthToken, getUpstreamAuthorizeUrl, type MyMLHUser, type Props } from "./utils";
 import { clientIdAlreadyApproved, parseRedirectApproval, renderApprovalDialog } from "./workers-oauth-utils";
 
 const app = new Hono<{ Bindings: Env & { OAUTH_PROVIDER: OAuthHelpers } }>();

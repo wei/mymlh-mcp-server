@@ -5,21 +5,14 @@
     "clientKind": "git",
     "useIgnoreFile": true
   },
-  "files": {
-    "ignoreUnknown": false
-  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 120
   },
-  "organizeImports": {
-    "enabled": true
-  },
   "linter": {
     "enabled": true,
-    "ignore": ["**/worker-configuration.d.ts"],
     "rules": {
       "recommended": true,
       "suspicious": {
@@ -31,6 +24,15 @@
       }
     }
   },
+  "files": {
+    "ignoreUnknown": false
+  },
+  "overrides": [
+    {
+      "includes": ["**/worker-configuration.d.ts"],
+      "linter": { "enabled": false }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "double"

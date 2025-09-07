@@ -74,7 +74,7 @@ Connect the Inspector to your local server at `http://localhost:8788/mcp`. You'l
 This project uses [Biome](https://biomejs.dev/) for code formatting and linting. Before committing your changes, please run the following command to ensure your code adheres to the project's style:
 
 ```bash
-npm run check
+npm run lint
 ```
 
 ### Commit Messages

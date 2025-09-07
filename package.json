@@ -8,21 +8,26 @@
     "start": "wrangler dev",
     "cf-typegen": "wrangler types",
     "type-check": "tsc --noEmit",
-    "check": "biome check --write .",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
     "prepare": "husky"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx,js,jsx,json,md}": "biome check --write"
   },
   "dependencies": {
     "@cloudflare/workers-oauth-provider": "^0.0.6",
-    "@modelcontextprotocol/sdk": "1.17.3",
+    "@modelcontextprotocol/sdk": "1.17.5",
     "agents": "^0.0.113",
-    "hono": "^4.9.5",
+    "hono": "^4.9.6",
     "just-pick": "^4.2.0",
     "workers-mcp": "^0.0.13",
-    "zod": "^3.25.76"
+    "zod": "^4.1.5"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.8.3",
+    "@biomejs/biome": "^2.2.3",
     "@types/node": "^24.3.1",
+    "lint-staged": "^15.2.10",
     "husky": "^9.1.7",
     "typescript": "5.9.2",
     "wrangler": "^4.34.0"
