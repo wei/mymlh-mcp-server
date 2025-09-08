@@ -41,22 +41,12 @@
       "id": "34489678da33486998704ed5af7b9c26"
     }
   ],
-  "ai": {
-    "binding": "AI"
-  },
+  // "ai": {
+  //   "binding": "AI"
+  // },
   "observability": {
     "enabled": true
   },
-  /**
-   * Custom domain configuration
-   * Docs: https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
-   */
-  "routes": [
-    {
-      "pattern": "mymlh-mcp.git.ci",
-      "custom_domain": true
-    }
-  ],
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
@@ -87,6 +77,17 @@
    * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
    */
   // "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
+  /**
+   * Custom domain configuration
+   * Docs: https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
+   * ⚠️IMPORTANT: Comment out this block when running locally.
+   */
+  "routes": [
+    {
+      "pattern": "mymlh-mcp.git.ci",
+      "custom_domain": true
+    }
+  ],
   "dev": {
     "port": 8788
   }
