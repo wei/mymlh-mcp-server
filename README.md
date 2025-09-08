@@ -134,8 +134,8 @@ Once connected and authenticated, you can use the following tools:
 
 | Tool                      | Description                                                        |
 | ------------------------- | ------------------------------------------------------------------ |
-| `mymlh_get_user_info`     | Fetch current MyMLH user                                           |
-| `mymlh_get_token_details` | Return current MyMLH access token details                          |
+| `mymlh_get_user`          | Fetch current MyMLH user profile                                   |
+| `mymlh_get_token`         | Return current MyMLH access token details                          |
 | `mymlh_refresh_token`     | Exchange MyMLH refresh_token for a new access token and persist it |
 
 ### Test with MCP Inspector
@@ -174,7 +174,7 @@ For full control, you can deploy your own instance to Cloudflare. See the [Deplo
 
 We welcome contributions! Whether you're fixing a bug, adding a feature, or improving documentation, your help is appreciated.
 
-Please read our [Contributing Guide](CONTRIBUTING.md) to get started.
+For development setup, project structure, how to add tools, and contributing guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

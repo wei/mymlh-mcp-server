@@ -13,8 +13,7 @@ This guide provides instructions for deploying your own instance of the MyMLH MC
 
 First, you need to create a new MyMLH Application in the [MLH developer portal](https://my.mlh.io/developers) to get your API credentials.
 
-- **Homepage URL**: `https://<your-worker>.<your-subdomain>.workers.dev`
-- **Authorization callback URL**: `https://<your-worker>.<your-subdomain>.workers.dev/callback`
+- **Callback URLs**: `https://<your-worker>.<your-subdomain>.workers.dev/callback`
 
 Replace `<your-worker>` and `<your-subdomain>` with the names you plan to use for your Cloudflare Worker. After creating the application, take note of your **Client ID** and **Client Secret**.
 
@@ -59,7 +58,32 @@ This command will output an ID. You need to add this to your `wrangler.jsonc` fi
 }
 ```
 
-## 4. Deploy the Server
+## 4. (Optional) Configure a Custom Domain
+
+If you want your Worker to be available at a custom domain you own (instead of `*.workers.dev`), set up a custom domain route in `wrangler.jsonc` and ensure the domain is in your Cloudflare account with DNS managed by Cloudflare. You will also need to add your custom domain to your MyMLH application's **Callback URLs**.
+
+1. Verify your domain is added to Cloudflare.
+2. Add a `routes` entry to `wrangler.jsonc`:
+
+```jsonc
+{
+  // ...
+  "routes": [
+    {
+      "pattern": "<your-subdomain>.<your-domain>.example",
+      "custom_domain": true
+    }
+  ]
+  // ...
+}
+```
+3. Add `https://<your-subdomain>.<your-domain>.example/callback` to your MyMLH application's **Callback URLs**.
+
+Notes:
+- You can add multiple route objects if needed.
+- For local development, remove or comment out this `routes` block to avoid conflicts with `wrangler dev`.
+
+## 5. Deploy the Server
 
 With your configuration in place, you can now deploy the MCP server to your Cloudflare account.
 
@@ -69,7 +93,7 @@ wrangler deploy
 
 Once the deployment is complete, your MCP server will be available at the URL you configured in the first step (`https://<your-worker>.<your-subdomain>.workers.dev`).
 
-## 5. Test Your Deployment
+## 6. Test Your Deployment
 
 You can test your newly deployed server using the [Model Context Protocol Inspector](https://modelcontextprotocol.io/docs/tools/inspector).
 

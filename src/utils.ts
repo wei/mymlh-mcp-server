@@ -1,3 +1,5 @@
+import type { MyMLHTokenResponse } from "./types";
+
 /**
  * Constructs an authorization URL for an upstream service.
  *
@@ -59,120 +61,75 @@ export async function fetchUpstreamAuthToken({
   if (!code) {
     return [null, new Response("Missing code", { status: 400 })];
   }
-
-  const resp = await fetch(upstream_url, {
-    body: new URLSearchParams({
-      grant_type: "authorization_code",
-      client_id,
-      client_secret,
-      code: code as string,
-      redirect_uri,
-    }).toString(),
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    method: "POST",
+  const [json, err] = await requestOAuthToken({
+    upstream_url,
+    client_id,
+    client_secret,
+    grant_type: "authorization_code",
+    code,
+    redirect_uri,
   });
-  if (!resp.ok) {
-    console.log(await resp.text());
-    return [null, new Response("Failed to fetch access token", { status: 500 })];
-  }
-  let accessToken: string | null = null;
-  const raw: MyMLHTokenResponse | undefined = (await resp.json()) as MyMLHTokenResponse;
-  accessToken = raw.access_token ?? null;
-  if (!accessToken) {
-    return [null, new Response("Missing access token", { status: 400 })];
-  }
-  return [accessToken, null, raw];
+  if (err) return [null, err];
+  const accessToken = json?.access_token ?? null;
+  if (!accessToken) return [null, new Response("Missing access token", { status: 400 })];
+  return [accessToken, null, json];
 }
 
-export interface MyMLHUserProfile {
-  country_of_residence?: string;
-  race_or_ethnicity?: string;
-  gender?: string;
-  age?: number;
-}
-
-export interface MyMLHEducationEntry {
-  id: string;
-  current: boolean;
-  school_name: string;
-  school_type: string | null;
-  start_date: number | null;
-  end_date: number | null;
-  major?: string | null;
-}
-
-export interface MyMLHEmploymentEntry {
-  id: string;
-  current: boolean;
-  employer_name: string;
-  company?: string;
-  title?: string | null;
-  type?: string | null;
-  start_date: number | null;
-  end_date: number | null;
-}
-
-export interface MyMLHAddress {
-  id: string;
-  line1: string;
-  line2?: string | null;
-  city: string;
-  state?: string | null;
-  postal_code?: string | null;
-  country: string;
-}
-
-export interface MyMLHUser {
-  id: string;
-  created_at?: number;
-  updated_at?: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone_number?: string;
-  profile?: MyMLHUserProfile;
-  address?: MyMLHAddress;
-  professional_experience?: MyMLHEmploymentEntry[];
-  education?: MyMLHEducationEntry[];
-  // future optional fields: event_preferences, social_profiles, etc.
-}
-
-export interface MyMLHTokenResponse {
-  access_token?: string;
-  token_type?: string;
-  expires_in?: number;
+/**
+ * Generic OAuth token request helper used for both authorization_code and refresh_token grants.
+ */
+export async function requestOAuthToken({
+  upstream_url,
+  client_id,
+  client_secret,
+  grant_type,
+  code,
+  redirect_uri,
+  refresh_token,
+}: {
+  upstream_url: string;
+  client_id: string;
+  client_secret: string;
+  grant_type: "authorization_code" | "refresh_token";
+  code?: string;
+  redirect_uri?: string;
   refresh_token?: string;
-  scope?: string;
+}): Promise<[MyMLHTokenResponse, null] | [null, Response]> {
+  const params = new URLSearchParams({
+    grant_type,
+    client_id,
+    client_secret,
+  });
+  if (grant_type === "authorization_code") {
+    if (!code || !redirect_uri) {
+      return [null, new Response("Missing code or redirect_uri", { status: 400 })];
+    }
+    params.set("code", code);
+    params.set("redirect_uri", redirect_uri);
+  } else if (grant_type === "refresh_token") {
+    if (!refresh_token) {
+      return [null, new Response("Missing refresh_token", { status: 400 })];
+    }
+    params.set("refresh_token", refresh_token);
+  }
+
+  try {
+    const resp = await fetch(upstream_url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+    });
+    if (!resp.ok) {
+      console.error("Token endpoint error", { url: upstream_url, status: resp.status });
+      return [null, new Response("Failed to fetch access token", { status: 500 })];
+    }
+    const json = (await resp.json()) as MyMLHTokenResponse;
+    return [json, null];
+  } catch (e) {
+    console.error("Token endpoint network error", { url: upstream_url, error: String(e) });
+    return [null, new Response("Upstream token request failed", { status: 502 })];
+  }
 }
-
-export type Props = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  accessToken: string;
-  refreshToken?: string;
-  tokenType?: string;
-  scope?: string;
-  expiresIn?: number;
-  // Unix time (seconds) when the current access token was issued
-  accessTokenIssuedAt?: number;
-};
-
-export const ALL_MYMLH_SCOPES = [
-  "public",
-  "offline_access",
-  "user:read:profile",
-  // "user:read:address",  // Not yet ready on MyMLH as of 09/05/2025
-  "user:read:birthday",
-  "user:read:demographics",
-  "user:read:education",
-  "user:read:email",
-  "user:read:employment",
-  "user:read:event_preferences",
-  "user:read:phone",
-  "user:read:social_profiles",
-].join(" ");

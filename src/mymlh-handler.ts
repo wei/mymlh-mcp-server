@@ -1,6 +1,8 @@
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { Hono } from "hono";
-import { ALL_MYMLH_SCOPES, fetchUpstreamAuthToken, getUpstreamAuthorizeUrl, type MyMLHUser, type Props } from "./utils";
+import { ALL_MYMLH_SCOPES, MYMLH_API_BASE, MYMLH_AUTH_URL, MYMLH_TOKEN_URL } from "./constants";
+import type { MyMLHUser, Props } from "./types";
+import { fetchUpstreamAuthToken, getUpstreamAuthorizeUrl } from "./utils";
 import { clientIdAlreadyApproved, parseRedirectApproval, renderApprovalDialog } from "./workers-oauth-utils";
 
 const app = new Hono<{ Bindings: Env & { OAUTH_PROVIDER: OAuthHelpers } }>();
@@ -62,7 +64,7 @@ async function redirectToMyMLH(
         redirect_uri: new URL("/callback", request.url).href,
         scope: ALL_MYMLH_SCOPES,
         state: btoa(JSON.stringify(oauthReqInfo)),
-        upstream_url: "https://my.mlh.io/oauth/authorize",
+        upstream_url: MYMLH_AUTH_URL,
       }),
     },
     status: 302,
@@ -90,12 +92,12 @@ app.get("/callback", async (c) => {
     client_secret: c.env.MYMLH_CLIENT_SECRET,
     code: c.req.query("code"),
     redirect_uri: new URL("/callback", c.req.url).href,
-    upstream_url: "https://my.mlh.io/oauth/token",
+    upstream_url: MYMLH_TOKEN_URL,
   });
   if (errResponse) return errResponse;
 
   // Fetch the user info from MyMLH
-  const meResp = await fetch("https://api.mlh.com/v4/users/me", {
+  const meResp = await fetch(`${MYMLH_API_BASE}/users/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!meResp.ok) {
