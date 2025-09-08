@@ -47,15 +47,52 @@ Before you begin, please make sure you have the following installed:
 
     You can generate a `COOKIE_ENCRYPTION_KEY` by running `openssl rand -hex 32` in your terminal.
 
-4.  **Run the Development Server**
+4.  **Remove Custom-Domain Routes for Local Dev**
 
-    Start the local development server using Wrangler:
+    Wrangler's local dev server should not use production custom domains. If your `wrangler.jsonc` contains a `routes` entry with a `custom_domain`, remove it or comment it out while developing locally. Leaving it enabled can cause `wrangler dev` to fail or bind incorrectly.
+
+    Example (remove or comment this block for local dev):
+
+    ```jsonc
+    {
+      // ...
+      "routes": [
+        {
+          "pattern": "your-domain.example",
+          "custom_domain": true
+        }
+      ]
+      // ...
+    }
+    ```
+
+5.  **Run the Development Server**
+
+    Start the local development server using the npm script:
 
     ```bash
-    wrangler dev
+    npm run dev
     ```
 
     Your server will be running at `http://localhost:8788`.
+
+### Project Structure
+
+```
+src/
+├── index.ts                 # MCP entry; registers tools
+├── mymlh-handler.ts         # OAuth approval, callback, redirects
+├── types.ts                 # Centralized types: Props, MyMLH*, ToolContext
+├── constants.ts             # Centralized constants (MyMLH API URLs, OAuth scopes)
+├── utils.ts                 # OAuth helpers (authorize URL, token helpers)
+├── workers-oauth-utils.ts   # Approval cookie + dialog helpers
+├── mymlh-api.ts             # MyMLH API helpers (refresh + auto-refresh)
+└── tools/
+    ├── index.ts             # registerAllTools (uses ToolContext from src/types.ts)
+    ├── user.ts              # mymlh_get_user
+    └── tokens.ts            # mymlh_refresh_token, mymlh_get_token
+
+```
 
 ## Testing Your Changes
 
@@ -66,6 +103,49 @@ npx @modelcontextprotocol/inspector@latest
 ```
 
 Connect the Inspector to your local server at `http://localhost:8788/mcp`. You'll be redirected to MyMLH to authenticate, and then you can test the available tools.
+
+### Modular Tools Pattern
+
+Tools are modular and live under `src/tools/`:
+
+– Use `ToolContext` from `src/types.ts` for `env`, `getProps()`, and MyMLH API helpers.
+- Add a registrar `registerX(server, ctx)` in a new file and import it in `src/tools/index.ts`. Multiple related tools can be colocated in a single module (e.g., `tokens.ts`) and registered via a group function (e.g., `registerTokenTools(server, ctx)`).
+- Keep types strict (avoid `any`/`unknown`). If you need arguments, add a precise schema and types.
+
+Shared MyMLH API helpers are in `src/mymlh-api.ts` (token refresh via the generic `requestOAuthToken` + `fetchMyMLHWithAutoRefresh`) to keep logic consistent across tools.
+
+### Add a New Tool
+
+1) Create a registrar in `src/tools/your-tool.ts`:
+
+```ts
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ToolContext } from "../types";
+
+export function registerYourTool(server: McpServer, ctx: ToolContext): void {
+  server.tool("your_tool_name", "Describe your tool", /* schema */ {}, async () => {
+    const props = ctx.getProps();
+    // Optionally call ctx.fetchMyMLHWithAutoRefresh or ctx.refreshUpstreamToken
+    return { content: [{ type: "text", text: "ok" }] };
+  });
+}
+```
+
+2) Wire it up in `src/tools/index.ts`:
+
+```ts
+import { registerYourTool } from "./your-tool";
+// ... inside registerAllTools(...)
+registerYourTool(server, ctx);
+```
+
+3) Check types and lint:
+
+```bash
+npm run type-check && npm run lint
+```
+
+4) Test via Inspector on `http://localhost:8788/mcp`.
 
 ## Contribution Guidelines
 
@@ -100,6 +180,7 @@ Also synchronize examples when renaming or changing:
 - Environment variables or secret names in `.dev.vars(.example)` and Wrangler.
 - `package.json` scripts and documented usage.
 - HTML approval dialog parameters/behavior in `workers-oauth-utils.ts`.
+- Project structure (e.g., new files in `src/tools/`, `src/mymlh-api.ts`).
 
 ### Pull Request Process
 
@@ -121,6 +202,7 @@ Also synchronize examples when renaming or changing:
 - Local OAuth flow verified (`/authorize` → callback → tools work via Inspector).
 - Documentation updated as needed (e.g., `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `DEPLOYMENT.md`).
 - Include a brief “Docs updated” note listing which docs changed and why.
+  - Example: "Docs updated: README (project structure, add-tool guide), AGENTS (tools folder), CONTRIBUTING (modular tools pattern)."
 
 ## Code of Conduct
 

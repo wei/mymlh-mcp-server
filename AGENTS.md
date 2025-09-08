@@ -5,8 +5,15 @@ This repository implements an OAuth-enabled MCP remote HTTP server for MyMLH on 
 ## Project Structure & Module Organization
 - `src/index.ts` — entry; registers MCP tools and routes.
 - `src/mymlh-handler.ts` — OAuth approval, callback, and redirects.
-- `src/utils.ts` — MyMLH types and OAuth helpers.
+- `src/types.ts` — centralized types (`Props`, `MyMLH*`, `ToolContext`).
+- `src/constants.ts` — Centralized constants (MyMLH API URLs, OAuth scopes).
+- `src/utils.ts` — OAuth helpers (e.g., `getUpstreamAuthorizeUrl`, `requestOAuthToken` (generic token helper for auth code and refresh), and `fetchUpstreamAuthToken` (thin wrapper returning `[accessToken, null, raw]`).
 - `src/workers-oauth-utils.ts` — signed-approval cookie + HTML dialog.
+- `src/mymlh-api.ts` — shared MyMLH API helpers (token refresh via `requestOAuthToken` + auto-refresh fetch), typed.
+- `src/tools/` — modular MCP tools and registry. Multiple related tools may live in one file.
+- `src/tools/index.ts` — `registerAllTools(server, { env, getProps, updateProps })`.
+  - `src/tools/user.ts` — registers `mymlh_get_user`.
+  - `src/tools/tokens.ts` — registers token-related tools (`mymlh_refresh_token`, `mymlh_get_token`).
 - Config: `wrangler.jsonc`, `tsconfig.json`, `biome.json`, `.dev.vars(.example)`.
 
 ## Build, Test, and Development Commands
@@ -31,9 +38,15 @@ Examples:
 - Validate OAuth: visit `/authorize` flow; ensure redirect + token exchange completes and tools return data.
 - There is no unit-test suite yet; keep changes small and test via Inspector and README flows.
 
+### Adding a new tool (pattern)
+- Create a file in `src/tools/` and export `registerX(server, ctx)` that calls `server.tool(...)`. You may group multiple related tools in one module (e.g., `tokens.ts`).
+- Use the `ToolContext` from `src/types.ts`: access `env`, `getProps()`, and API helpers.
+- Import and call your registrar(s) from `src/tools/index.ts` inside `registerAllTools`.
+- Keep types strict (no `any`/`unknown`); extend `Props` or add precise interfaces if needed.
+
 ## Commit & Pull Request Guidelines
 - Commits: use Conventional Commits (e.g., `feat: add token refresh`, `fix: handle 401 retry`).
-- PRs must include: purpose/summary, linked issues, screenshots/GIFs for UI changes (approval dialog), and notes on config/secrets if needed.
+- PRs must include: purpose/summary, linked issues, and notes on config/secrets if needed.
 - Pre-PR checklist: `npm run type-check && npm run lint`, verify local OAuth + tool calls, update docs (e.g., `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `DEPLOYMENT.md`) if behavior or endpoints change.
 
 ## Security & Configuration Tips
@@ -44,9 +57,9 @@ Examples:
 - Always update documentation when changing behavior, routes, tools, env vars, config, build commands, or UI.
 - Keep all Markdown files consistent. At a minimum, review and update:
   - `AGENTS.md` — process, conventions, expectations for agents and contributors.
-  - `README.md` — overview, setup, usage (MCP endpoint, local dev, examples).
-  - `CONTRIBUTING.md` — development workflow, commit style, branching, PR steps.
-  - `DEPLOYMENT.md` — Wrangler commands, secrets, environment-specific notes.
+  - `README.md` — overview, setup, usage.
+  - `CONTRIBUTING.md` — project structure, development setup, development workflow, commit style, branching, PR steps.
+  - `DEPLOYMENT.md` — deployment instructions, wrangler commands, secrets, environment-specific notes.
   - `CODE_OF_CONDUCT.md` — only if policy or links change.
   - Any `*.md` and other repo Markdown (e.g., `SECURITY.md`, `CHANGELOG.md`).
 - Synchronize examples and references when you rename or change any of the following:
@@ -54,5 +67,4 @@ Examples:
   - Environment variables, secret names, or defaults in `.dev.vars(.example)` and Wrangler.
   - Commands in `package.json` and their documented usage.
   - HTML approval dialog behavior or parameters in `workers-oauth-utils.ts`.
-- PRs should include a short “Docs updated” note summarizing which files were touched and why.
 - Prefer small, surgical doc updates alongside code changes over catch‑up edits later.
