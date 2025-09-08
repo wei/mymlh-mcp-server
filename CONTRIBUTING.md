@@ -40,8 +40,8 @@ Before you begin, please make sure you have the following installed:
     Once created, copy the `.dev.vars.example` file to a new file named `.dev.vars` and fill in your development credentials:
 
     ```
-    MYMLH_CLIENT_ID=your_dev_mylmh_client_id
-    MYMLH_CLIENT_SECRET=your_dev_mylmh_client_secret
+    MYMLH_CLIENT_ID=your_dev_mymlh_client_id
+    MYMLH_CLIENT_SECRET=your_dev_mymlh_client_secret
     COOKIE_ENCRYPTION_KEY=generate_a_random_32_byte_hex_string
     ```
 
