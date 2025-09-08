@@ -25,7 +25,7 @@ You can connect to our publicly hosted instance using any MCP client that suppor
 
 ### Add MCP Server
 
-[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_MCP-0098FF)](vscode:mcp/install?%7B%22name%22%3A%22mymlh%22%2C%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fmymlh-mcp.git.ci%2Fmcp%22%7D)
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_MCP-0098FF)](https://insiders.vscode.dev/redirect/mcp/install?name=mymlh&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fmymlh-mcp.git.ci%2Fmcp%22%7D)
 [![Install in Cursor](https://img.shields.io/badge/Cursor-Install_MCP-000000)](https://cursor.com/en/install-mcp?name=mymlh&config=eyJ1cmwiOiJodHRwczovL215bWxoLW1jcC5naXQuY2kvbWNwIn0%3D)
 
 Example configuration snippets for common MCP clients:
