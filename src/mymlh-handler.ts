@@ -1,6 +1,6 @@
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { Hono } from "hono";
-import { ALL_MYMLH_SCOPES, MYMLH_API_BASE, MYMLH_AUTH_URL, MYMLH_TOKEN_URL } from "./constants";
+import { DEFAULT_MYMLH_SCOPES, MYMLH_API_BASE, MYMLH_AUTH_URL, MYMLH_TOKEN_URL } from "./constants";
 import type { MyMLHUser, Props } from "./types";
 import { fetchUpstreamAuthToken, getUpstreamAuthorizeUrl } from "./utils";
 import { clientIdAlreadyApproved, parseRedirectApproval, renderApprovalDialog } from "./workers-oauth-utils";
@@ -62,7 +62,7 @@ async function redirectToMyMLH(
       location: getUpstreamAuthorizeUrl({
         client_id,
         redirect_uri: new URL("/callback", request.url).href,
-        scope: ALL_MYMLH_SCOPES,
+        scope: DEFAULT_MYMLH_SCOPES,
         state: btoa(JSON.stringify(oauthReqInfo)),
         upstream_url: MYMLH_AUTH_URL,
       }),
