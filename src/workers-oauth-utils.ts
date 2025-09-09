@@ -567,7 +567,11 @@ export interface ParsedApprovalResult {
  * @returns A promise resolving to an object containing the parsed state and necessary headers.
  * @throws If the request method is not POST, form data is invalid, or state is missing.
  */
-export async function parseRedirectApproval(request: Request, cookieSecret: string): Promise<ParsedApprovalResult> {
+export async function parseRedirectApproval(
+  request: Request,
+  cookieSecret: string,
+  cookieMaxAgeSeconds?: number,
+): Promise<ParsedApprovalResult> {
   if (request.method !== "POST") {
     throw new Error("Invalid request method. Expected POST.");
   }
@@ -609,8 +613,9 @@ export async function parseRedirectApproval(request: Request, cookieSecret: stri
   const newCookieValue = `${signature}.${btoa(payload)}`; // signature.base64(payload)
 
   // Generate Set-Cookie header
+  const maxAge = typeof cookieMaxAgeSeconds === "number" ? cookieMaxAgeSeconds : ONE_YEAR_IN_SECONDS;
   const headers: Record<string, string> = {
-    "Set-Cookie": `${COOKIE_NAME}=${newCookieValue}; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=${ONE_YEAR_IN_SECONDS}`,
+    "Set-Cookie": `${COOKIE_NAME}=${newCookieValue}; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=${maxAge}`,
   };
 
   return { headers, state };

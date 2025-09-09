@@ -39,7 +39,8 @@ app.get("/authorize", async (c) => {
 app.post("/authorize", async (c) => {
   // Validates form submission, extracts state, and generates Set-Cookie headers to skip approval dialog next time
   try {
-    const { state, headers } = await parseRedirectApproval(c.req.raw, c.env.COOKIE_ENCRYPTION_KEY);
+    // Use a very short-lived approval cookie to force re-prompt MyMLH on re-login (e.g., 5 seconds)
+    const { state, headers } = await parseRedirectApproval(c.req.raw, c.env.COOKIE_ENCRYPTION_KEY, 5);
     if (!state.oauthReqInfo) {
       return c.text("Invalid request", 400);
     }
