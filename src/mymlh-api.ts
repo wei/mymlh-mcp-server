@@ -13,8 +13,7 @@ export function makeMyMLHApi(env: Env, getProps: () => Props, updateProps: (next
       grant_type: "refresh_token",
       refresh_token: props.refreshToken,
     });
-    if (!tokenJson) return null;
-    if (tokenJson.access_token) {
+    if (tokenJson?.access_token) {
       await updateProps({
         ...props,
         accessToken: tokenJson.access_token,
@@ -24,6 +23,17 @@ export function makeMyMLHApi(env: Env, getProps: () => Props, updateProps: (next
         expiresIn: tokenJson.expires_in ?? props.expiresIn,
         accessTokenIssuedAt: Math.floor(Date.now() / 1000),
       });
+    } else {
+      await updateProps({
+        ...props,
+        accessToken: "",
+        refreshToken: undefined,
+        tokenType: undefined,
+        scope: undefined,
+        expiresIn: undefined,
+        accessTokenIssuedAt: undefined,
+      });
+      return null;
     }
     return tokenJson;
   }
