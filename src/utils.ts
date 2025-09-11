@@ -30,6 +30,7 @@ export function getUpstreamAuthorizeUrl({
   upstream.searchParams.set("scope", scope);
   if (state) upstream.searchParams.set("state", state);
   upstream.searchParams.set("response_type", "code");
+  upstream.searchParams.set("prompt", "consent");
   return upstream.href;
 }
 
