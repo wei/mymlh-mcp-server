@@ -86,6 +86,14 @@
     {
       "pattern": "mymlh-mcp.git.ci",
       "custom_domain": true
+    },
+    {
+      "pattern": "mymlh-mcp-alt.git.ci",
+      "custom_domain": true
+    },
+    {
+      "pattern": "mymlh-mcp-backup.git.ci",
+      "custom_domain": true
     }
   ],
   "dev": {
