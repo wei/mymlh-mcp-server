@@ -64,6 +64,12 @@
    * They are kept here for wrangler to generate proper types.
    * https://developers.cloudflare.com/workers/wrangler/configuration/#durable-objects
    */
+  "migrations": [
+    {
+      "new_sqlite_classes": ["MyMCP"],
+      "tag": "v1"
+    }
+  ],
   "durable_objects": {
     "bindings": [
       {
@@ -75,7 +81,7 @@
   "kv_namespaces": [
     {
       "binding": "OAUTH_KV",
-      "id": "00000000-0000-0000-0000-000000000000"
+      "id": "34489678da33486998704ed5af7b9c26" // placeholder for local-only dev; not used in deploy
     }
   ],
   "env": {
@@ -98,7 +104,7 @@
       "kv_namespaces": [
         {
           "binding": "OAUTH_KV",
-          "id": "34489678da33486998704ed5af7b9c26"
+          "id": "49140900e36642199bfd7ed38f07fbfe"
         }
       ],
       "routes": [
@@ -194,7 +200,7 @@
       "kv_namespaces": [
         {
           "binding": "OAUTH_KV",
-          "id": "00000000-0000-0000-0000-000000000000"
+          "id": "34489678da33486998704ed5af7b9c26" // placeholder for local-only dev; not used in deploy
         }
       ],
       "vars": {
