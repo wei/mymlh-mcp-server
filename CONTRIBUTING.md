@@ -47,26 +47,7 @@ Before you begin, please make sure you have the following installed:
 
     You can generate a `COOKIE_ENCRYPTION_KEY` by running `openssl rand -hex 32` in your terminal.
 
-4.  **Remove Custom-Domain Routes for Local Dev**
-
-    Wrangler's local dev server should not use production custom domains. If your `wrangler.jsonc` contains a `routes` entry with a `custom_domain`, remove it or comment it out while developing locally. Leaving it enabled can cause `wrangler dev` to fail or bind incorrectly.
-
-    Example (remove or comment this block for local dev):
-
-    ```jsonc
-    {
-      // ...
-      "routes": [
-        {
-          "pattern": "your-domain.example",
-          "custom_domain": true
-        }
-      ]
-      // ...
-    }
-    ```
-
-5.  **Run the Development Server**
+4.  **Run the Development Server**
 
     Start the local development server using the npm script:
 
@@ -74,7 +55,7 @@ Before you begin, please make sure you have the following installed:
     npm run dev
     ```
 
-    Your server will be running at `http://localhost:8788`.
+    This will automatically use the `local` environment configuration. Your server will be running at `http://localhost:8788`.
 
 ### Project Structure
 
