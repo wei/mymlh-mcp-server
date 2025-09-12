@@ -58,6 +58,26 @@
    * Custom domain configuration
    * Docs: https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
    */
+  //  "routes": [{ "pattern": "mymlh-mcp.git.ci", "custom_domain": true }],
+  /**
+   * The following bindings are unused as they are defined in each environment.
+   * They are kept here for wrangler to generate proper types.
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#durable-objects
+   */
+  "durable_objects": {
+    "bindings": [
+      {
+        "class_name": "MyMCP",
+        "name": "MCP_OBJECT"
+      }
+    ]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
   "env": {
     "production": {
       "name": "mymlh-mcp-server-production",
@@ -174,7 +194,7 @@
       "kv_namespaces": [
         {
           "binding": "OAUTH_KV",
-          "id": "local_oauth_kv"
+          "id": "00000000-0000-0000-0000-000000000000"
         }
       ],
       "vars": {
