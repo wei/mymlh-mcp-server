@@ -18,7 +18,7 @@ This repository implements an OAuth-enabled MCP remote HTTP server for MyMLH on 
 
 ## Build, Test, and Development Commands
 - `npm run dev` (alias `npm start`) — run locally via Wrangler with `local` environment at `http://localhost:8788`.
-- `npm run deploy` — deploy to all environments (production, alt, fallback).
+- `npm run deploy:all` — deploy to all environments (production, alt, fallback).
 - `npm run deploy:production` — deploy to `production` environment (mymlh-mcp.git.ci).
 - `npm run deploy:alt` — deploy to `alt` environment (mymlh-mcp-alt.git.ci).
 - `npm run deploy:fallback` — deploy to `fallback` environment (mymlh-mcp-fallback.git.ci).
