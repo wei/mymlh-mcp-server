@@ -17,33 +17,10 @@
    * https://developers.cloudflare.com/workers/configuration/secrets/
    *
    * Commands to set secrets:
-   * npx wrangler secret put MYMLH_CLIENT_ID
-   * npx wrangler secret put MYMLH_CLIENT_SECRET
-   * npx wrangler secret put COOKIE_ENCRYPTION_KEY
+   * npx wrangler secret put MYMLH_CLIENT_ID -e [env]
+   * npx wrangler secret put MYMLH_CLIENT_SECRET -e [env]
+   * npx wrangler secret put COOKIE_ENCRYPTION_KEY -e [env]
    */
-  "migrations": [
-    {
-      "new_sqlite_classes": ["MyMCP"],
-      "tag": "v1"
-    }
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "class_name": "MyMCP",
-        "name": "MCP_OBJECT"
-      }
-    ]
-  },
-  "kv_namespaces": [
-    {
-      "binding": "OAUTH_KV",
-      "id": "34489678da33486998704ed5af7b9c26"
-    }
-  ],
-  // "ai": {
-  //   "binding": "AI"
-  // },
   "observability": {
     "enabled": true
   },
@@ -80,22 +57,131 @@
   /**
    * Custom domain configuration
    * Docs: https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
-   * ⚠️IMPORTANT: Comment out this block when running locally.
    */
-  "routes": [
-    {
-      "pattern": "mymlh-mcp.git.ci",
-      "custom_domain": true
+  "env": {
+    "production": {
+      "name": "mymlh-mcp-server-production",
+      "migrations": [
+        {
+          "new_sqlite_classes": ["MyMCP"],
+          "tag": "v1"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "class_name": "MyMCP",
+            "name": "MCP_OBJECT"
+          }
+        ]
+      },
+      "kv_namespaces": [
+        {
+          "binding": "OAUTH_KV",
+          "id": "34489678da33486998704ed5af7b9c26"
+        }
+      ],
+      "routes": [
+        {
+          "pattern": "mymlh-mcp.git.ci",
+          "custom_domain": true
+        }
+      ],
+      "vars": {
+        "ENV_NAME": "production"
+      }
     },
-    {
-      "pattern": "mymlh-mcp-alt.git.ci",
-      "custom_domain": true
+    "alt": {
+      "name": "mymlh-mcp-server-alt",
+      "migrations": [
+        {
+          "new_sqlite_classes": ["MyMCP"],
+          "tag": "v1"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "class_name": "MyMCP",
+            "name": "MCP_OBJECT"
+          }
+        ]
+      },
+      "kv_namespaces": [
+        {
+          "binding": "OAUTH_KV",
+          "id": "42b3931f648b4576ac64ec52008437aa"
+        }
+      ],
+      "routes": [
+        {
+          "pattern": "mymlh-mcp-alt.git.ci",
+          "custom_domain": true
+        }
+      ],
+      "vars": {
+        "ENV_NAME": "alt"
+      }
     },
-    {
-      "pattern": "mymlh-mcp-backup.git.ci",
-      "custom_domain": true
+    "fallback": {
+      "name": "mymlh-mcp-server-fallback",
+      "migrations": [
+        {
+          "new_sqlite_classes": ["MyMCP"],
+          "tag": "v1"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "class_name": "MyMCP",
+            "name": "MCP_OBJECT"
+          }
+        ]
+      },
+      "kv_namespaces": [
+        {
+          "binding": "OAUTH_KV",
+          "id": "6c23aab820414579827a68f957db77f4"
+        }
+      ],
+      "routes": [
+        {
+          "pattern": "mymlh-mcp-fallback.git.ci",
+          "custom_domain": true
+        }
+      ],
+      "vars": {
+        "ENV_NAME": "fallback"
+      }
+    },
+    "local": {
+      "name": "mymlh-mcp-server-local",
+      "migrations": [
+        {
+          "new_sqlite_classes": ["MyMCP"],
+          "tag": "v1"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "class_name": "MyMCP",
+            "name": "MCP_OBJECT"
+          }
+        ]
+      },
+      "kv_namespaces": [
+        {
+          "binding": "OAUTH_KV",
+          "id": "local_oauth_kv"
+        }
+      ],
+      "vars": {
+        "ENV_NAME": "local"
+      }
     }
-  ],
+  },
   "dev": {
     "port": 8788
   }

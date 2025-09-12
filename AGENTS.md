@@ -17,15 +17,18 @@ This repository implements an OAuth-enabled MCP remote HTTP server for MyMLH on 
 - Config: `wrangler.jsonc`, `tsconfig.json`, `biome.json`, `.dev.vars(.example)`.
 
 ## Build, Test, and Development Commands
-- `npm run dev` (alias `npm start`) — run locally via Wrangler at `http://localhost:8788`.
-- `npm run deploy` — deploy to Cloudflare Workers.
+- `npm run dev` (alias `npm start`) — run locally via Wrangler with `local` environment at `http://localhost:8788`.
+- `npm run deploy` — deploy to all environments (production, alt, fallback).
+- `npm run deploy:production` — deploy to `production` environment (mymlh-mcp.git.ci).
+- `npm run deploy:alt` — deploy to `alt` environment (mymlh-mcp-alt.git.ci).
+- `npm run deploy:fallback` — deploy to `fallback` environment (mymlh-mcp-fallback.git.ci).
 - `npm run type-check` — TypeScript project type safety.
 - `npm run lint` / `npm run lint:fix` — Biome lint/format (check or write).
 - `npm run cf-typegen` — generate Cloudflare bindings types. Run if `wrangler.jsonc` changes.
 
-Examples:
+Environment Setup:
 - Set local env: copy `.dev.vars.example` to `.dev.vars` and fill values.
-- Set Cloudflare secrets: `npx wrangler secret put MYMLH_CLIENT_ID` (repeat for `MYMLH_CLIENT_SECRET`, `COOKIE_ENCRYPTION_KEY`).
+- Set Cloudflare secrets per environment: `npx wrangler secret put MYMLH_CLIENT_ID -e production` (repeat for `MYMLH_CLIENT_SECRET`, `COOKIE_ENCRYPTION_KEY` and other environments: `alt`, `fallback`).
 
 ## Coding Style & Naming Conventions
 - Language: TypeScript (strict). Indent 2 spaces, line width 120, double quotes (Biome enforced).
@@ -34,8 +37,9 @@ Examples:
 - Run `npm run lint` before committing; Lefthook runs Biome on staged files (pre-commit) and full project (pre-push).
 
 ## Testing Guidelines
-- Primary: run `npm run dev`, then exercise tools with MCP Inspector (`npx @modelcontextprotocol/inspector`) against `http://localhost:8788/mcp`.
+- Primary: run `npm run dev` (uses `local` environment), then exercise tools with MCP Inspector (`npx @modelcontextprotocol/inspector`) against `http://localhost:8788/mcp`.
 - Validate OAuth: visit `/authorize` flow; ensure redirect + token exchange completes and tools return data.
+- Environment testing: Deploy to specific environments using `npm run deploy:alt` or `npm run deploy:fallback` for staging tests.
 - There is no unit-test suite yet; keep changes small and test via Inspector and README flows.
 
 ### Adding a new tool (pattern)
