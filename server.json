@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.wei/mymlh-mcp-server",
+  "description": "OAuth-enabled MyMLH MCP server for accessing MyMLH data.",
+  "version": "0.0.1",
+  "repository": {
+    "url": "https://github.com/wei/mymlh-mcp-server",
+    "source": "github"
+  },
+  "website_url": "https://mymlh-mcp.git.ci/",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mymlh-mcp.git.ci/mcp"
+    },
+    {
+      "type": "sse",
+      "url": "https://mymlh-mcp.git.ci/sse"
+    }
+  ]
+}
