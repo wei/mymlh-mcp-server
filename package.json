@@ -29,6 +29,6 @@
     "@types/node": "^24.3.1",
     "lefthook": "^1.13.1",
     "typescript": "5.9.2",
-    "wrangler": "^4.37.0"
+    "wrangler": "^4.42.0"
   }
 }
