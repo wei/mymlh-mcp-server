@@ -33,5 +33,6 @@ export default new OAuthProvider({
   authorizeEndpoint: "/authorize",
   clientRegistrationEndpoint: "/register",
   defaultHandler: MyMLHHandler as any,
+  refreshTokenTTL: 24 * 60 * 60,
   tokenEndpoint: "/token",
 });
