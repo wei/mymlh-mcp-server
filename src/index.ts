@@ -15,7 +15,7 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
   async init() {
     await registerAllTools(this.server, {
       env: this.env,
-      getProps: () => this.props,
+      getProps: () => this.props || ({} as Props),
       updateProps: async (next: Props) => {
         await this.updateProps(next);
       },
