@@ -18,12 +18,13 @@ export function registerUserTools(server: McpServer, ctx: ToolContext): void {
           content: [
             {
               type: "text",
-              text: "Authentication with MyMLH expired or revoked. Re-auth via /authorize.",
+              text: "Authentication with MyMLH expired or revoked. Please re-authenticate by reconnecting to the MCP server.",
             },
           ],
+          isError: true,
         };
       }
-      return { content: [{ type: "text", text: `Failed: ${resp.status}` }] };
+      return { content: [{ type: "text", text: `Failed: ${resp.status}` }], isError: true };
     }
     const full: MyMLHUser = (await resp.json()) as MyMLHUser;
     return { content: [{ type: "text", text: JSON.stringify(full) }] };

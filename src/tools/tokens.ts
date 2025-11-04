@@ -6,11 +6,22 @@ export function registerTokenTools(server: McpServer, ctx: ToolContext): void {
   server.tool("mymlh_refresh_token", "Exchange refresh_token for a new access token and persist it", {}, async () => {
     const props = ctx.getProps();
     if (!props.refreshToken) {
-      return { content: [{ type: "text", text: "No refresh token available" }] };
+      return {
+        content: [{ type: "text", text: "No refresh token available. Cannot refresh access token." }],
+        isError: true,
+      };
     }
     const json = await ctx.refreshUpstreamToken();
     if (!json || !json.access_token) {
-      return { content: [{ type: "text", text: "Failed to refresh token" }] };
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to refresh token. The refresh token may have been revoked. Please re-authenticate by reconnecting to the MCP server.",
+          },
+        ],
+        isError: true,
+      };
     }
     const { accessToken, tokenType, scope, expiresIn, accessTokenIssuedAt } = ctx.getProps();
     const expires_at = accessTokenIssuedAt && expiresIn ? accessTokenIssuedAt + expiresIn : undefined;
@@ -32,7 +43,10 @@ export function registerTokenTools(server: McpServer, ctx: ToolContext): void {
   server.tool("mymlh_get_token", "Return current MyMLH access token details", {}, async () => {
     const props = ctx.getProps();
     if (!props.accessToken) {
-      return { content: [{ type: "text", text: "No access token available" }] };
+      return {
+        content: [{ type: "text", text: "No access token available. Please authenticate first." }],
+        isError: true,
+      };
     }
     const { accessToken, tokenType, scope, expiresIn, accessTokenIssuedAt } = props;
     const expires_at = accessTokenIssuedAt && expiresIn ? accessTokenIssuedAt + expiresIn : undefined;
