@@ -19,7 +19,7 @@
     "@cloudflare/workers-oauth-provider": "^0.1.0",
     "@modelcontextprotocol/sdk": "^1.22.0",
     "agents": "^0.2.26",
-    "hono": "^4.10.6",
+    "hono": "^4.10.7",
     "just-pick": "^4.2.0",
     "workers-mcp": "^0.0.13",
     "zod": "^4.1.13"
