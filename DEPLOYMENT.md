@@ -129,17 +129,17 @@ With your configuration in place, you can now deploy to specific environments:
 
 ### Deploy to Production
 ```bash
-npm run deploy:production
+pnpm run deploy:production
 ```
 
 ### Deploy to Alt Environment
 ```bash
-npm run deploy:alt
+pnpm run deploy:alt
 ```
 
 ### Deploy to Fallback Environment
 ```bash
-npm run deploy:fallback
+pnpm run deploy:fallback
 ```
 
 Once deployment is complete, your MCP server will be available at the configured domain for each environment.
@@ -150,7 +150,7 @@ You can test your newly deployed server using the [Model Context Protocol Inspec
 
 Run the Inspector from your terminal:
 ```bash
-npx @modelcontextprotocol/inspector@latest
+pnpm dlx @modelcontextprotocol/inspector@latest
 ```
 
 In the Inspector, enter the URL to your server's MCP endpoint for the environment you deployed:
@@ -165,8 +165,8 @@ Click "Connect" and follow the authentication flow. Once authenticated, you shou
 
 For automatic deployments, you can configure Cloudflare Workers builds to deploy different environments from different Git branches:
 
-- **Production environment**: Deploy from `main` branch using `npm run deploy:production`
-- **Alt environment**: Deploy from `staging` branch using `npm run deploy:alt`
-- **Fallback environment**: Deploy from `fallback` branch using `npm run deploy:fallback`
+- **Production environment**: Deploy from `main` branch using `pnpm run deploy:production`
+- **Alt environment**: Deploy from `staging` branch using `pnpm run deploy:alt`
+- **Fallback environment**: Deploy from `fallback` branch using `pnpm run deploy:fallback`
 
 Configure these in your Cloudflare dashboard under **Workers & Pages** > **Settings** > **Builds** for each Worker.
