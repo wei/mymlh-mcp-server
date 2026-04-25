@@ -7,7 +7,7 @@ Thank you for your interest in contributing to the MyMLH MCP Server! We welcome 
 Before you begin, please make sure you have the following installed:
 
 - [Node.js](https://nodejs.org/) (latest LTS version recommended)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [pnpm](https://pnpm.io/) (install via `npm install -g pnpm` or [Corepack](https://nodejs.org/api/corepack.html))
 - A [Cloudflare account](https://dash.cloudflare.com/sign-up) for testing and deployment
 - A [MyMLH developer account](https://my.mlh.io/developers) to get API credentials
 
@@ -24,10 +24,10 @@ Before you begin, please make sure you have the following installed:
 
 2.  **Install Dependencies**
 
-    Install the project dependencies using npm:
+    Install the project dependencies using pnpm:
 
     ```bash
-    npm install
+    pnpm install
     ```
 
 3.  **Set Up Local Environment Variables**
@@ -49,10 +49,10 @@ Before you begin, please make sure you have the following installed:
 
 4.  **Run the Development Server**
 
-    Start the local development server using the npm script:
+    Start the local development server using the pnpm script:
 
     ```bash
-    npm run dev
+    pnpm run dev
     ```
 
     This will automatically use the `local` environment configuration. Your server will be running at `http://localhost:8788`.
@@ -90,7 +90,7 @@ test/
 To test your changes locally, you can use the [Model Context Protocol Inspector](https://modelcontextprotocol.io/docs/tools/inspector):
 
 ```bash
-npx @modelcontextprotocol/inspector@latest
+pnpm dlx @modelcontextprotocol/inspector@latest
 ```
 
 Connect the Inspector to your local server at `http://localhost:8788/mcp`. You'll be redirected to MyMLH to authenticate, and then you can test the available tools.
@@ -133,7 +133,7 @@ registerYourTool(server, ctx);
 3) Check types, lint, and tests:
 
 ```bash
-npm run type-check && npm run lint && npm test
+pnpm run type-check && pnpm run lint && pnpm test
 ```
 
 4) Test via Inspector on `http://localhost:8788/mcp`.
@@ -145,10 +145,10 @@ npm run type-check && npm run lint && npm test
 This project uses [Biome](https://biomejs.dev/) for code formatting and linting. Before committing your changes, please run the following command to ensure your code adheres to the project's style:
 
 ```bash
-npm run lint
+pnpm run lint
 ```
 
-Git hooks are managed by [Lefthook](https://github.com/evilmartians/lefthook). Running `npm install` will install hooks via the `prepare` script. Hooks run Biome formatting + lint on staged files at pre-commit and a full Biome check at pre-push using the local Biome package (no `npx`).
+Git hooks are managed by [Lefthook](https://github.com/evilmartians/lefthook). Running `pnpm install` will install hooks via the `prepare` script. Hooks run Biome formatting + lint on staged files at pre-commit and a full Biome check at pre-push using the local Biome binary directly.
 
 ### Commit Messages
 
@@ -189,7 +189,7 @@ Also synchronize examples when renaming or changing:
 
 #### Pre‑PR Checklist
 
-- `npm run type-check && npm run lint` pass locally.
+- `pnpm run type-check && pnpm run lint` pass locally.
 - Local OAuth flow verified (`/authorize` → callback → tools work via Inspector).
 - Documentation updated as needed (e.g., `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `DEPLOYMENT.md`).
 - Include a brief “Docs updated” note listing which docs changed and why.

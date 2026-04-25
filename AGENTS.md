@@ -21,33 +21,35 @@ This repository implements an OAuth-enabled MCP remote HTTP server for MyMLH on 
 - Config: `wrangler.jsonc`, `tsconfig.json`, `biome.json`, `vitest.config.mts`, `.dev.vars(.example)`, `.github/workflows/ci.yml`.
 
 ## Build, Test, and Development Commands
-- `npm run dev` (alias `npm start`) — run locally via Wrangler with `local` environment at `http://localhost:8788`.
-- `npm run deploy:all` — deploy to all environments (production, alt, fallback).
-- `npm run deploy:production` — deploy to `production` environment (mymlh-mcp.git.ci).
-- `npm run deploy:alt` — deploy to `alt` environment (mymlh-mcp-alt.git.ci).
-- `npm run deploy:fallback` — deploy to `fallback` environment (mymlh-mcp-fallback.git.ci).
-- `npm run type-check` — TypeScript project type safety.
-- `npm run lint` / `npm run lint:fix` — Biome lint/format (check or write).
-- `npm run cf-typegen` — generate Cloudflare bindings types. Run if `wrangler.jsonc` changes.
-- `npm test` / `npm run test:watch` — run Vitest in workerd via `@cloudflare/vitest-pool-workers`.
+- Package manager: pnpm (declared via `packageManager` in `package.json`). Install via `npm install -g pnpm` or Corepack.
+- `pnpm install` — install dependencies (uses `pnpm-lock.yaml`).
+- `pnpm run dev` (alias `pnpm start`) — run locally via Wrangler with `local` environment at `http://localhost:8788`.
+- `pnpm run deploy:all` — deploy to all environments (production, alt, fallback).
+- `pnpm run deploy:production` — deploy to `production` environment (mymlh-mcp.git.ci).
+- `pnpm run deploy:alt` — deploy to `alt` environment (mymlh-mcp-alt.git.ci).
+- `pnpm run deploy:fallback` — deploy to `fallback` environment (mymlh-mcp-fallback.git.ci).
+- `pnpm run type-check` — TypeScript project type safety.
+- `pnpm run lint` / `pnpm run lint:fix` — Biome lint/format (check or write).
+- `pnpm run cf-typegen` — generate Cloudflare bindings types. Run if `wrangler.jsonc` changes.
+- `pnpm test` / `pnpm run test:watch` — run Vitest in workerd via `@cloudflare/vitest-pool-workers`.
 
 Environment Setup:
 - Set local env: copy `.dev.vars.example` to `.dev.vars` and fill values.
-- Set Cloudflare secrets per environment: `npx wrangler secret put MYMLH_CLIENT_ID -e production` (repeat for `MYMLH_CLIENT_SECRET`, `COOKIE_ENCRYPTION_KEY` and other environments: `alt`, `fallback`).
+- Set Cloudflare secrets per environment: `pnpm exec wrangler secret put MYMLH_CLIENT_ID -e production` (repeat for `MYMLH_CLIENT_SECRET`, `COOKIE_ENCRYPTION_KEY` and other environments: `alt`, `fallback`).
 
 ## Coding Style & Naming Conventions
 - Language: TypeScript (strict). Indent 2 spaces, line width 120, double quotes (Biome enforced).
 - Filenames: kebab-case (e.g., `oauth/handler.ts`, `mymlh/api.ts`).
 - Symbols: camelCase for vars/functions; PascalCase for types/classes (e.g., `MyMCP`, `MyMLHUser`); snake_case for constants and MCP tool names.
-- Run `npm run lint` before committing; Lefthook runs Biome on staged files (pre-commit) and full project (pre-push).
+- Run `pnpm run lint` before committing; Lefthook runs Biome on staged files (pre-commit) and full project (pre-push).
 
 ## Testing Guidelines
-- `npm test` runs the Vitest suite (unit + integration) in workerd via `@cloudflare/vitest-pool-workers`. CI runs the same.
+- `pnpm test` runs the Vitest suite (unit + integration) in workerd via `@cloudflare/vitest-pool-workers`. CI runs the same.
 - Unit tests live under `test/unit/` and cover pure helpers (cookie HMAC, upstream URL/token, approval, MyMLH API auto-refresh).
 - Integration tests live under `test/integration/` and hit the worker via `SELF.fetch` (`/`, `/mcp`, `/authorize`, `/callback`).
 - Outbound mocks: `vi.stubGlobal("fetch", ...)` works for unit tests; SELF.fetch flows do not currently support outbound mocking, so success-path OAuth assertions are covered via unit tests on the underlying helpers.
-- Manual: run `npm run dev` and exercise tools via MCP Inspector (`npx @modelcontextprotocol/inspector`) at `http://localhost:8788/mcp`.
-- Environment testing: deploy to `alt` or `fallback` via `npm run deploy:alt` / `deploy:fallback` for staging.
+- Manual: run `pnpm run dev` and exercise tools via MCP Inspector (`pnpm dlx @modelcontextprotocol/inspector`) at `http://localhost:8788/mcp`.
+- Environment testing: deploy to `alt` or `fallback` via `pnpm run deploy:alt` / `deploy:fallback` for staging.
 
 ### Adding a new tool (pattern)
 - Create a file in `src/mcp/tools/` and export `registerX(server, ctx)` that calls `server.tool(...)`. You may group related tools in one module (e.g., `user.ts`).
@@ -58,7 +60,7 @@ Environment Setup:
 ## Commit & Pull Request Guidelines
 - Commits: use Conventional Commits (e.g., `feat: add token refresh`, `fix: handle 401 retry`).
 - PRs must include: purpose/summary, linked issues, and notes on config/secrets if needed.
-- Pre-PR checklist: `npm run type-check && npm run lint`, verify local OAuth + tool calls, update docs (e.g., `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `DEPLOYMENT.md`) if behavior or endpoints change.
+- Pre-PR checklist: `pnpm run type-check && pnpm run lint`, verify local OAuth + tool calls, update docs (e.g., `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `DEPLOYMENT.md`) if behavior or endpoints change.
 
 ## Security & Configuration Tips
 - Never commit secrets. Use `.dev.vars` locally (gitignored) and Wrangler secrets in production.
