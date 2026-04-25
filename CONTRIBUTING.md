@@ -65,9 +65,9 @@ src/
 ├── types.ts                       # Props, MyMLH*, ToolContext
 ├── oauth/
 │   ├── handler.ts                 # Hono: /, /authorize, /callback
-│   ├── upstream.ts                # MyMLH authorize URL + token helpers
+│   ├── upstream.ts                # getUpstreamAuthorizeUrl, requestUpstreamToken
 │   └── approval/
-│       ├── cookie.ts              # HMAC-SHA256 cookie sign/verify
+│       ├── cookie.ts              # HMAC cookie + state sign/verify
 │       ├── dialog.ts              # auto-escaping approval dialog
 │       └── index.ts               # clientIdAlreadyApproved, parseRedirectApproval
 ├── mymlh/
@@ -81,6 +81,7 @@ src/
         └── tokens.ts              # mymlh_get_token, mymlh_refresh_token
 
 test/
+├── helpers/                       # stubFetch, injectTestSecrets
 ├── unit/                          # Pure helper tests (vi.stubGlobal for fetch)
 └── integration/                   # SELF.fetch tests against the wired worker
 ```

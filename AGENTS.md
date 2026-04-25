@@ -6,9 +6,9 @@ This repository implements an OAuth-enabled MCP remote HTTP server for MyMLH on 
 - `src/index.ts` — entry; wires `OAuthProvider` to `MyMCP` and the MyMLH handler.
 - `src/types.ts` — centralized types (`Props`, `MyMLH*`, `ToolContext`).
 - `src/oauth/handler.ts` — Hono app for `/`, `/authorize` (GET/POST), `/callback`.
-- `src/oauth/upstream.ts` — `getUpstreamAuthorizeUrl`, `requestUpstreamToken` (generic auth_code + refresh), `fetchUpstreamAuthToken` (thin wrapper).
+- `src/oauth/upstream.ts` — `getUpstreamAuthorizeUrl`, `requestUpstreamToken` (generic auth_code + refresh).
 - `src/oauth/approval/` — approval dialog module:
-  - `cookie.ts` — HMAC-SHA256 sign/verify + approved-clients cookie helpers.
+  - `cookie.ts` — HMAC-SHA256 sign/verify, approved-clients cookie helpers, and `signState`/`verifyState` for OAuth state integrity.
   - `dialog.ts` — auto-escaping `renderApprovalDialog`.
   - `index.ts` — `clientIdAlreadyApproved`, `parseRedirectApproval`.
 - `src/mymlh/api.ts` — `makeMyMLHApi(env, getProps, updateProps)` returning `refreshUpstreamToken` + `fetchMyMLHWithAutoRefresh`.
@@ -38,7 +38,7 @@ Environment Setup:
 
 ## Coding Style & Naming Conventions
 - Language: TypeScript (strict). Indent 2 spaces, line width 120, double quotes (Biome enforced).
-- Filenames: kebab-case (e.g., `mymlh-handler.ts`).
+- Filenames: kebab-case (e.g., `oauth/handler.ts`, `mymlh/api.ts`).
 - Symbols: camelCase for vars/functions; PascalCase for types/classes (e.g., `MyMCP`, `MyMLHUser`); snake_case for constants and MCP tool names.
 - Run `npm run lint` before committing; Lefthook runs Biome on staged files (pre-commit) and full project (pre-push).
 
