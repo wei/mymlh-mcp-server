@@ -101,7 +101,7 @@ Split the vendored `workers-oauth-utils.ts` into three focused files under `src/
 - `clientIdAlreadyApproved(request, clientId, secret): Promise<boolean>` — delegates to `readApprovedClients`.
 - `parseRedirectApproval(request, secret, cookieMaxAgeSeconds?): Promise<{ state, headers }>` — extracts `oauthReqInfo.clientId` from encoded state, dedups into approved set, returns `Set-Cookie` header.
 
-Cookie name `mcp-approved-clients`, format `hex(sig).base64(json)`, attributes `HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=<year|5>`, are unchanged.
+Cookie name `mcp-approved-clients`, format `hex(sig).base64(json)`, attributes `HttpOnly; Secure; Path=/; SameSite=Lax`. `Max-Age` defaults to 1 year (31 536 000 s); `parseRedirectApproval` is invoked with `cookieMaxAgeSeconds = 5` from the POST `/authorize` handler so re-approvals force a near-immediate re-prompt, matching current behavior.
 
 ## 6. Dependency Versions
 
@@ -155,7 +155,9 @@ export default defineConfig({
 });
 ```
 
-**Unit tests** (pure helpers; may run in default pool if they have no binding dependency, otherwise in workers pool):
+All tests run in the workers pool via the `cloudflareTest` plugin; no separate Node pool is configured.
+
+**Unit tests** (pure helpers, workerd runtime, no binding I/O):
 - `test/unit/cookie.test.ts` — sign/verify round-trip; tamper detection; malformed cookie returns `null`; dedup in `buildSetCookie`.
 - `test/unit/upstream.test.ts` — `getUpstreamAuthorizeUrl` produces correct query (`response_type=code`, `prompt=consent`, `scope`, `state`); `requestUpstreamToken` formats `application/x-www-form-urlencoded` body for both grants; handles non-2xx and network-error paths.
 - `test/unit/api.test.ts` — proactive refresh triggers ~60s before expiry; single 401 triggers refresh+retry; double 401 clears tokens; `updateProps` called with merged token fields on success.
@@ -193,7 +195,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 24 # accepts 'lts/*' as a more conservative alternative
           cache: npm
       - run: npm ci
       - run: npm run type-check
