@@ -2,8 +2,9 @@ import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provid
 import { Hono } from "hono";
 import { name as pkgName } from "../../package.json";
 import { DEFAULT_MYMLH_SCOPES, MYMLH_API_BASE, MYMLH_AUTH_URL, MYMLH_TOKEN_URL } from "../mymlh/scopes";
-import type { MyMLHTokenResponse, MyMLHUser, Props } from "../types";
+import type { MyMLHUser, Props } from "../types";
 import { clientIdAlreadyApproved, parseRedirectApproval, renderApprovalDialog } from "./approval";
+import { signState, verifyState } from "./approval/cookie";
 import { getUpstreamAuthorizeUrl, requestUpstreamToken } from "./upstream";
 
 const SERVER_DISPLAY_NAME = "MyMLH MCP Server";
@@ -36,7 +37,7 @@ app.get("/authorize", async (c) => {
   if (!clientId) return c.text("Invalid request", 400);
 
   if (await clientIdAlreadyApproved(c.req.raw, clientId, c.env.COOKIE_ENCRYPTION_KEY)) {
-    return redirectToMyMLH(c.req.raw, oauthReqInfo, c.env.MYMLH_CLIENT_ID);
+    return await redirectToMyMLH(c.req.raw, oauthReqInfo, c.env.MYMLH_CLIENT_ID, {}, c.env.COOKIE_ENCRYPTION_KEY);
   }
 
   return renderApprovalDialog(c.req.raw, {
@@ -54,19 +55,27 @@ app.post("/authorize", async (c) => {
       APPROVAL_REPROMPT_SECONDS,
     );
     if (!state.oauthReqInfo) return c.text("Invalid request", 400);
-    return redirectToMyMLH(c.req.raw, state.oauthReqInfo, c.env.MYMLH_CLIENT_ID, headers);
+    return await redirectToMyMLH(
+      c.req.raw,
+      state.oauthReqInfo,
+      c.env.MYMLH_CLIENT_ID,
+      headers,
+      c.env.COOKIE_ENCRYPTION_KEY,
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to process approval";
     return c.text(`Invalid approval submission: ${msg}`, 400);
   }
 });
 
-function redirectToMyMLH(
+async function redirectToMyMLH(
   request: Request,
   oauthReqInfo: AuthRequest,
   client_id: string,
   headers: Record<string, string> = {},
-): Response {
+  cookieEncryptionKey: string,
+): Promise<Response> {
+  const state = await signState(JSON.stringify(oauthReqInfo), cookieEncryptionKey);
   return new Response(null, {
     headers: {
       ...headers,
@@ -74,7 +83,7 @@ function redirectToMyMLH(
         client_id,
         redirect_uri: new URL("/callback", request.url).href,
         scope: DEFAULT_MYMLH_SCOPES,
-        state: btoa(JSON.stringify(oauthReqInfo)),
+        state,
         upstream_url: MYMLH_AUTH_URL,
       }),
     },
@@ -85,9 +94,11 @@ function redirectToMyMLH(
 app.get("/callback", async (c) => {
   const stateParam = c.req.query("state");
   if (!stateParam) return c.text("Invalid state", 400);
+  const verifiedPayload = await verifyState(stateParam, c.env.COOKIE_ENCRYPTION_KEY);
+  if (!verifiedPayload) return c.text("Invalid state", 400);
   let oauthReqInfo: AuthRequest;
   try {
-    oauthReqInfo = JSON.parse(atob(stateParam)) as AuthRequest;
+    oauthReqInfo = JSON.parse(verifiedPayload) as AuthRequest;
   } catch {
     return c.text("Invalid state", 400);
   }
@@ -115,7 +126,6 @@ app.get("/callback", async (c) => {
   const me = (await meResp.json()) as MyMLHUser;
   const { id, first_name, last_name, email } = me;
 
-  const tok = tokenResponse satisfies MyMLHTokenResponse;
   const { redirectTo } = await c.env.OAUTH_PROVIDER.completeAuthorization({
     metadata: { label: `${first_name} ${last_name}`.trim() },
     props: {
@@ -124,11 +134,11 @@ app.get("/callback", async (c) => {
       first_name,
       last_name,
       id,
-      refreshToken: tok.refresh_token,
-      tokenType: tok.token_type,
-      expiresIn: tok.expires_in,
+      refreshToken: tokenResponse.refresh_token,
+      tokenType: tokenResponse.token_type,
+      expiresIn: tokenResponse.expires_in,
       accessTokenIssuedAt: Math.floor(Date.now() / 1000),
-      scope: tok.scope,
+      scope: tokenResponse.scope,
     } satisfies Props,
     request: oauthReqInfo,
     scope: oauthReqInfo.scope,

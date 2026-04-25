@@ -19,10 +19,7 @@ export function makeMyMLHApi(env: Env, getProps: () => Props, updateProps: (next
 
   async function refreshUpstreamToken(): Promise<MyMLHTokenResponse | null> {
     const props = getProps();
-    if (!props.refreshToken) {
-      await clearStoredTokens(props);
-      return null;
-    }
+    if (!props.refreshToken) return null;
     const [tokenJson] = await requestUpstreamToken({
       upstream_url: MYMLH_TOKEN_URL,
       client_id: env.MYMLH_CLIENT_ID,

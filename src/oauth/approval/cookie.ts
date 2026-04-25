@@ -54,6 +54,33 @@ async function verifySignature(key: CryptoKey, signatureHex: string, data: strin
   }
 }
 
+export async function signState(payload: string, secret: string): Promise<string> {
+  const key = await getKey(secret);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(payload));
+  const sigHex = bytesToHex(new Uint8Array(sig));
+  return `${sigHex}.${btoa(payload)}`;
+}
+
+export async function verifyState(token: string, secret: string): Promise<string | null> {
+  const [sigHex, b64] = token.split(".");
+  if (!sigHex || !b64) return null;
+  let payload: string;
+  try {
+    payload = atob(b64);
+  } catch {
+    return null;
+  }
+  const key = await getKey(secret);
+  const bytes = hexToBytes(sigHex);
+  if (!bytes) return null;
+  try {
+    const ok = await crypto.subtle.verify("HMAC", key, bytes, enc.encode(payload));
+    return ok ? payload : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function readApprovedClients(cookieHeader: string | null, secret: string): Promise<string[] | null> {
   if (!cookieHeader) return null;
   const target = cookieHeader

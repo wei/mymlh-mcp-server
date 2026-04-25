@@ -119,6 +119,33 @@ describe("fetchMyMLHWithAutoRefresh", () => {
     expect(auth2).toBe("Bearer AT_new");
   });
 
+  it("does not clear tokens proactively when no refresh token and access token still works", async () => {
+    const { api, getProps, updateProps } = harness({
+      id: "u",
+      first_name: "F",
+      last_name: "L",
+      email: "e",
+      accessToken: "AT_valid",
+      refreshToken: undefined,
+      expiresIn: 3600,
+      accessTokenIssuedAt: now() - 3600, // within refresh threshold (near-expiry)
+    });
+
+    const { calls } = stubFetch([
+      // Only call: api.mlh.com returns 200 (token still valid)
+      { status: 200, body: JSON.stringify({ id: "u" }) },
+    ]);
+
+    const resp = await api.fetchMyMLHWithAutoRefresh("https://api.mlh.com/v4/users/me");
+    expect(resp.status).toBe(200);
+    // No token endpoint was called
+    expect(calls.every((c) => c.url !== "https://my.mlh.io/oauth/token")).toBe(true);
+    // Access token must not be cleared
+    expect(getProps().accessToken).toBe("AT_valid");
+    // updateProps not called (no refresh happened)
+    expect(updateProps).not.toHaveBeenCalled();
+  });
+
   it("clears tokens on double 401", async () => {
     const { api, getProps, updateProps } = harness({
       id: "u",
