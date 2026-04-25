@@ -19,6 +19,18 @@ function escapeHtml(unsafe: string): string {
     .replace(/'/g, "&#039;");
 }
 
+// Restrict embedded URLs to http(s) so attacker-registered clientUri/policyUri/tosUri
+// values like `javascript:` or `data:text/html,...` cannot execute when rendered as
+// `<a href>` / `<img src>` on the consent page.
+function safeHttpUrl(value: string): string | null {
+  try {
+    const u = new URL(value);
+    return u.protocol === "https:" || u.protocol === "http:" ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
 type Renderable = string | number | boolean | null | undefined;
 
 function html(strings: TemplateStringsArray, ...values: Renderable[]): string {
@@ -102,10 +114,10 @@ export function renderApprovalDialog(request: Request, options: ApprovalDialogOp
   const serverName = server.name;
   const clientName = client?.clientName ?? "Unknown MCP Client";
   const serverDescription = server.description ?? "";
-  const logoUrl = server.logo ?? "";
-  const clientUri = client?.clientUri ?? "";
-  const policyUri = client?.policyUri ?? "";
-  const tosUri = client?.tosUri ?? "";
+  const logoUrl = server.logo ? (safeHttpUrl(server.logo) ?? "") : "";
+  const clientUri = client?.clientUri ? (safeHttpUrl(client.clientUri) ?? "") : "";
+  const policyUri = client?.policyUri ? (safeHttpUrl(client.policyUri) ?? "") : "";
+  const tosUri = client?.tosUri ? (safeHttpUrl(client.tosUri) ?? "") : "";
   const contacts = client?.contacts && client.contacts.length > 0 ? client.contacts.join(", ") : "";
   const redirectUris = client?.redirectUris && client.redirectUris.length > 0 ? client.redirectUris : [];
   const pathname = new URL(request.url).pathname;

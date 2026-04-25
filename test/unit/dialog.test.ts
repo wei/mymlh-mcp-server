@@ -66,6 +66,43 @@ describe("renderApprovalDialog", () => {
     expect(text).toContain(`action="/authorize"`);
   });
 
+  it("strips javascript:/data: schemes from clientUri, policyUri, tosUri, logo", async () => {
+    const resp = renderApprovalDialog(makeRequest(), {
+      client: {
+        ...stubClient,
+        clientUri: "javascript:alert(1)",
+        policyUri: "data:text/html,<script>alert(1)</script>",
+        tosUri: "vbscript:msgbox(1)",
+      },
+      server: { name: "S", logo: "javascript:alert('logo')" },
+      state: { oauthReqInfo: { clientId: "c-1" } },
+    });
+    const text = await resp.text();
+    expect(text).not.toContain("javascript:");
+    expect(text).not.toContain("data:text/html");
+    expect(text).not.toContain("vbscript:");
+    expect(text).not.toContain("Website:");
+    expect(text).not.toContain("Privacy Policy:");
+    expect(text).not.toContain("Terms of Service:");
+  });
+
+  it("preserves valid http(s) clientUri, policyUri, tosUri", async () => {
+    const resp = renderApprovalDialog(makeRequest(), {
+      client: {
+        ...stubClient,
+        clientUri: "http://example.com/home",
+        policyUri: "https://example.com/privacy",
+        tosUri: "https://example.com/tos",
+      },
+      server: { name: "S" },
+      state: { oauthReqInfo: { clientId: "c-1" } },
+    });
+    const text = await resp.text();
+    expect(text).toContain(`href="http://example.com/home"`);
+    expect(text).toContain(`href="https://example.com/privacy"`);
+    expect(text).toContain(`href="https://example.com/tos"`);
+  });
+
   it("encodes state as base64 JSON in hidden input", async () => {
     const state = { oauthReqInfo: { clientId: "c-1", extra: "abc" } };
     const resp = renderApprovalDialog(makeRequest(), {

@@ -9,6 +9,7 @@
  */
 import { SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
+import { signState } from "../../src/oauth/approval/cookie";
 import { injectTestSecrets } from "../helpers/setup-env";
 
 beforeEach(() => {
@@ -26,7 +27,7 @@ describe("/callback", () => {
     expect(resp.status).toBe(400);
   });
 
-  it("returns 400 (or 5xx) when state is valid base64 but code exchange fails (no real upstream)", async () => {
+  it("returns non-2xx when signed state verifies but upstream code exchange fails", async () => {
     const oauthReqInfo = {
       clientId: "any-client",
       redirectUri: "https://client.test/cb",
@@ -38,12 +39,11 @@ describe("/callback", () => {
     };
     const url = new URL("https://worker.test/callback");
     url.searchParams.set("code", "UPSTREAM_CODE");
-    url.searchParams.set("state", btoa(JSON.stringify(oauthReqInfo)));
+    url.searchParams.set("state", await signState(JSON.stringify(oauthReqInfo), "cookie-secret"));
 
     const resp = await SELF.fetch(url.href, { redirect: "manual" });
-    // Without a real upstream, the token exchange will fail — expect non-2xx success
-    // The handler will return 4xx/5xx or redirect with an error
-    const isErrorOrRedirect = resp.status < 200 || resp.status >= 400 || resp.status === 302 || resp.status === 303;
-    expect(isErrorOrRedirect).toBe(true);
+    // Signed state passes verifyState; upstream token exchange then fails (no real my.mlh.io
+    // reachable from the test pool), so the handler must produce an error response.
+    expect(resp.status).toBeGreaterThanOrEqual(400);
   });
 });
