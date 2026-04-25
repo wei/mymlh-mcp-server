@@ -49,4 +49,15 @@ describe("signState / verifyState", () => {
     const result = await verifyState("", SECRET);
     expect(result).toBeNull();
   });
+
+  it("returns null when signature segment contains non-hex characters", async () => {
+    const payload = JSON.stringify({ clientId: "abc" });
+    const validToken = await signState(payload, SECRET);
+    const sigLength = validToken.indexOf(".");
+    // Replace the sig segment with same length but non-hex chars (still even length).
+    const nonHexSig = "z".repeat(sigLength);
+    const tampered = `${nonHexSig}.${validToken.slice(sigLength + 1)}`;
+    const result = await verifyState(tampered, SECRET);
+    expect(result).toBeNull();
+  });
 });

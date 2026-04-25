@@ -107,7 +107,7 @@ describe("requestUpstreamToken", () => {
     expect(err?.status).toBe(400);
   });
 
-  it("returns 500 Response when upstream returns non-2xx", async () => {
+  it("returns 502 Response when upstream returns non-2xx", async () => {
     stubFetch([{ status: 500, body: "oops", contentType: "text/plain" }]);
 
     const [, err] = await requestUpstreamToken({
@@ -117,6 +117,6 @@ describe("requestUpstreamToken", () => {
       grant_type: "refresh_token",
       refresh_token: "RT",
     });
-    expect(err?.status).toBe(500);
+    expect(err?.status).toBe(502);
   });
 });

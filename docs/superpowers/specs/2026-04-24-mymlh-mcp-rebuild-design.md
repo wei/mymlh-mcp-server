@@ -40,7 +40,7 @@ Stack (unchanged):
 
 Module boundaries:
 
-```
+```text
 src/
 ├── index.ts                  # OAuthProvider wiring; exports { default, MyMCP }
 ├── mcp/

@@ -67,12 +67,13 @@ export function makeMyMLHApi(env: Env, getProps: () => Props, updateProps: (next
     };
 
     let resp = await fetch(url, withAuth(effectiveAccessToken));
-    // If we just refreshed proactively and still got 401, the token is unusable —
-    // skip a second refresh and treat as unauthenticated.
-    if (resp.status === 401 && !didProactiveRefresh) {
+    // On 401: skip the reactive refresh if we just refreshed proactively (token already
+    // unusable) or have no refresh token (retry would re-issue the same 401).
+    if (resp.status === 401 && !didProactiveRefresh && getProps().refreshToken) {
       const refreshed = await refreshUpstreamToken();
-      const retryToken = refreshed?.access_token ?? getProps().accessToken;
-      resp = await fetch(url, withAuth(retryToken));
+      if (refreshed?.access_token) {
+        resp = await fetch(url, withAuth(refreshed.access_token));
+      }
     }
     if (resp.status === 401) await clearStoredTokens(getProps());
     return resp;

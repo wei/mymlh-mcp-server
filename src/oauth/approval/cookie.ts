@@ -38,32 +38,19 @@ function hexToBytes(hex: string): Uint8Array | null {
   return out;
 }
 
-async function signPayload(key: CryptoKey, data: string): Promise<string> {
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
-  return bytesToHex(new Uint8Array(sig));
-}
-
-async function verifySignature(key: CryptoKey, signatureHex: string, data: string): Promise<boolean> {
-  const bytes = hexToBytes(signatureHex);
-  if (!bytes) return false;
-  try {
-    return await crypto.subtle.verify("HMAC", key, bytes, enc.encode(data));
-  } catch (e) {
-    console.error("Error verifying signature:", e);
-    return false;
-  }
-}
-
-export async function signState(payload: string, secret: string): Promise<string> {
+async function signToken(payload: string, secret: string): Promise<string> {
   const key = await getKey(secret);
   const sig = await crypto.subtle.sign("HMAC", key, enc.encode(payload));
-  const sigHex = bytesToHex(new Uint8Array(sig));
-  return `${sigHex}.${btoa(payload)}`;
+  return `${bytesToHex(new Uint8Array(sig))}.${btoa(payload)}`;
 }
 
-export async function verifyState(token: string, secret: string): Promise<string | null> {
-  const [sigHex, b64] = token.split(".");
-  if (!sigHex || !b64) return null;
+async function verifyToken(token: string, secret: string): Promise<string | null> {
+  const dot = token.indexOf(".");
+  if (dot < 1 || dot === token.length - 1) return null;
+  const sigHex = token.slice(0, dot);
+  const b64 = token.slice(dot + 1);
+  const bytes = hexToBytes(sigHex);
+  if (!bytes) return null;
   let payload: string;
   try {
     payload = atob(b64);
@@ -71,8 +58,6 @@ export async function verifyState(token: string, secret: string): Promise<string
     return null;
   }
   const key = await getKey(secret);
-  const bytes = hexToBytes(sigHex);
-  if (!bytes) return null;
   try {
     const ok = await crypto.subtle.verify("HMAC", key, bytes, enc.encode(payload));
     return ok ? payload : null;
@@ -80,6 +65,9 @@ export async function verifyState(token: string, secret: string): Promise<string
     return null;
   }
 }
+
+export const signState = signToken;
+export const verifyState = verifyToken;
 
 export async function readApprovedClients(cookieHeader: string | null, secret: string): Promise<string[] | null> {
   if (!cookieHeader) return null;
@@ -89,18 +77,8 @@ export async function readApprovedClients(cookieHeader: string | null, secret: s
     .find((c) => c.startsWith(`${COOKIE_NAME}=`));
   if (!target) return null;
 
-  const [signatureHex, base64Payload] = target.substring(COOKIE_NAME.length + 1).split(".");
-  if (!signatureHex || !base64Payload) return null;
-
-  let payload: string;
-  try {
-    payload = atob(base64Payload);
-  } catch {
-    return null;
-  }
-
-  const key = await getKey(secret);
-  if (!(await verifySignature(key, signatureHex, payload))) return null;
+  const payload = await verifyToken(target.substring(COOKIE_NAME.length + 1), secret);
+  if (payload === null) return null;
 
   try {
     const parsed = JSON.parse(payload);
@@ -116,9 +94,6 @@ export async function buildSetCookie(
   secret: string,
   maxAgeSeconds: number = ONE_YEAR_IN_SECONDS,
 ): Promise<string> {
-  const payload = JSON.stringify(clientIds);
-  const key = await getKey(secret);
-  const signature = await signPayload(key, payload);
-  const value = `${signature}.${btoa(payload)}`;
+  const value = await signToken(JSON.stringify(clientIds), secret);
   return `${COOKIE_NAME}=${value}; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=${maxAgeSeconds}`;
 }

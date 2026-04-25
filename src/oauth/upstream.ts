@@ -65,7 +65,7 @@ export async function requestUpstreamToken({
     });
     if (!resp.ok) {
       console.error("Token endpoint error", { url: upstream_url, status: resp.status });
-      return [null, new Response("Failed to fetch access token", { status: 500 })];
+      return [null, new Response("Failed to fetch access token", { status: 502 })];
     }
     const json = (await resp.json()) as MyMLHTokenResponse;
     return [json, null];

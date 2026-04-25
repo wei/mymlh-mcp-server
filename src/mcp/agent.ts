@@ -10,7 +10,10 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
   async init() {
     registerAllTools(this.server, {
       env: this.env,
-      getProps: () => this.props || ({} as Props),
+      getProps: () => {
+        if (!this.props) throw new Error("MyMCP.props is unavailable; auth flow did not populate context");
+        return this.props;
+      },
       updateProps: (next: Props) => this.updateProps(next),
     });
   }

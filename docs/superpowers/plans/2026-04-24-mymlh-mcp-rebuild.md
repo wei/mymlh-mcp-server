@@ -6,6 +6,8 @@
 
 **Architecture:** `@cloudflare/workers-oauth-provider` wraps the worker and handles `/register`, `/token`, and PKCE. A `hono` default handler serves `/authorize` + `/callback` + `/` (liveness). `McpAgent` from `agents/mcp` backs a `MyMCP` Durable Object (sqlite-class, name preserved for migration compat) and registers three MCP tools with Zod input schemas on an `@modelcontextprotocol/sdk` `McpServer`. The approval dialog module is split into pure `cookie.ts` + `dialog.ts` + `index.ts` files. Tests run in `workerd` via `@cloudflare/vitest-pool-workers` with `fetchMock` stubbing upstream MyMLH.
 
+> **Implementation notes (post-merge):** This is a historical plan; final shipped code diverged in two minor ways: (1) outbound mocking uses `vi.stubGlobal("fetch", ...)` via the `test/helpers/stub-fetch.ts` helper rather than `fetchMock` from `cloudflare:test` (pool-workers 0.15 dropped that API); (2) the vitest config file is `vitest.config.mts`, not `vitest.config.ts`. The token tools (`mymlh_get_token`, `mymlh_refresh_token`) were also removed before v1.0 in favor of the single `mymlh_get_user` tool. See `AGENTS.md` and `CONTRIBUTING.md` for current state.
+
 **Tech Stack:** TypeScript 6, Cloudflare Workers, Hono 4.12, `@modelcontextprotocol/sdk` 1.29, `@cloudflare/workers-oauth-provider` 0.4, `agents` 0.11 (`McpAgent`), Zod 4.3, Biome 2.4, Vitest 4 + `@cloudflare/vitest-pool-workers` 0.15, Lefthook 2.1, Wrangler 4.85.
 
 **Branch:** all work on `rebuild/from-scratch`. Do NOT commit to `main`.
@@ -2411,7 +2413,7 @@ git commit -m "ci: add GitHub Actions workflow for type-check, lint, test"
 
 Add these lines if not already present:
 
-```
+```text
 .worktrees/
 coverage/
 ```

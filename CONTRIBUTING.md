@@ -111,7 +111,7 @@ Shared MyMLH API helpers are in `src/mymlh/api.ts` (token refresh via the generi
 
 ```ts
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ToolContext } from "../types";
+import type { ToolContext } from "../../types";
 
 export function registerYourTool(server: McpServer, ctx: ToolContext): void {
   server.tool("your_tool_name", "Describe your tool", /* schema */ {}, async () => {

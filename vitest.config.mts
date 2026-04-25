@@ -5,7 +5,6 @@ export default defineConfig({
   plugins: [
     cloudflareTest({
       wrangler: { configPath: "./wrangler.jsonc" },
-      miniflare: { compatibilityFlags: ["nodejs_compat"] },
     }),
   ],
 });

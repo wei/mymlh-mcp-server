@@ -62,8 +62,7 @@ describe("/authorize", () => {
     const loc = resp.headers.get("location") ?? "";
     expect(loc).toContain("https://my.mlh.io/oauth/authorize");
     expect(loc).toContain("prompt=consent");
-    // client_id in redirect URL comes from MYMLH_CLIENT_ID secret (either injected or from .dev.vars)
-    expect(loc).toMatch(/client_id=[^&]+/);
+    expect(loc).toContain("client_id=test-client-id");
     expect(resp.headers.get("set-cookie")).toContain("mcp-approved-clients=");
     expect(resp.headers.get("set-cookie")).toContain("Max-Age=5");
   });

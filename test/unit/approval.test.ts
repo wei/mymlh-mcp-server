@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { clientIdAlreadyApproved, parseRedirectApproval } from "../../src/oauth/approval";
-import { buildSetCookie } from "../../src/oauth/approval/cookie";
+import { buildSetCookie, readApprovedClients } from "../../src/oauth/approval/cookie";
 
 const SECRET = "test-secret-key";
 
@@ -8,7 +8,7 @@ function makeGet(url: string, headers: Record<string, string> = {}) {
   return new Request(url, { method: "GET", headers });
 }
 
-async function makePost(url: string, body: FormData, headers: Record<string, string> = {}) {
+function makePost(url: string, body: FormData, headers: Record<string, string> = {}) {
   return new Request(url, { method: "POST", body, headers });
 }
 
@@ -39,15 +39,29 @@ describe("parseRedirectApproval", () => {
 
   it("throws when state missing", async () => {
     const fd = new FormData();
-    const req = await makePost("https://s.test/authorize", fd);
+    const req = makePost("https://s.test/authorize", fd);
     await expect(parseRedirectApproval(req, SECRET)).rejects.toThrow();
+  });
+
+  it("throws when state is malformed (not valid base64 JSON)", async () => {
+    const fd = new FormData();
+    fd.set("state", "!!!not-base64!!!");
+    const req = makePost("https://s.test/authorize", fd);
+    await expect(parseRedirectApproval(req, SECRET)).rejects.toThrow(/decode state/i);
+  });
+
+  it("throws when parsed state has no oauthReqInfo.clientId", async () => {
+    const fd = new FormData();
+    fd.set("state", btoa(JSON.stringify({ oauthReqInfo: { redirectUri: "https://x" } })));
+    const req = makePost("https://s.test/authorize", fd);
+    await expect(parseRedirectApproval(req, SECRET)).rejects.toThrow(/clientId/);
   });
 
   it("extracts state and issues Set-Cookie with clientId appended", async () => {
     const state = { oauthReqInfo: { clientId: "c-42" } };
     const fd = new FormData();
     fd.set("state", btoa(JSON.stringify(state)));
-    const req = await makePost("https://s.test/authorize", fd);
+    const req = makePost("https://s.test/authorize", fd);
     const { state: parsed, headers } = await parseRedirectApproval(req, SECRET, 5);
     expect(parsed).toEqual(state);
     expect(headers["Set-Cookie"]).toContain("mcp-approved-clients=");
@@ -59,13 +73,11 @@ describe("parseRedirectApproval", () => {
     const state = { oauthReqInfo: { clientId: "new" } };
     const fd = new FormData();
     fd.set("state", btoa(JSON.stringify(state)));
-    const req = await makePost("https://s.test/authorize", fd, {
+    const req = makePost("https://s.test/authorize", fd, {
       Cookie: existingSet.split(";")[0],
     });
     const { headers } = await parseRedirectApproval(req, SECRET, 60);
-    // Re-parse: cookie should contain both old and new
     const newCookieHeader = headers["Set-Cookie"].split(";")[0];
-    const { readApprovedClients } = await import("../../src/oauth/approval/cookie");
     const approved = await readApprovedClients(newCookieHeader, SECRET);
     expect(approved).toEqual(["old", "new"]);
   });
