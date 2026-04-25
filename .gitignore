@@ -178,3 +178,6 @@ dist
 
 # mcp-registry
 .mcpregistry*
+
+# git worktrees (per global convention)
+.worktrees/
