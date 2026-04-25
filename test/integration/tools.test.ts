@@ -5,9 +5,9 @@
  * and https://api.mlh.com/v4/users/me, which cannot be intercepted from the test runner when
  * the Worker runs in a separate isolate via SELF.fetch.
  *
- * The tool registration logic (mymlh_get_user, mymlh_get_token, mymlh_refresh_token) is covered
- * by unit tests in test/unit/. This file verifies that the /mcp endpoint is wired up and protected
- * by OAuth — i.e., invalid bearer tokens are rejected.
+ * The tool registration logic (mymlh_get_user) is covered by unit tests in test/unit/.
+ * This file verifies that the /mcp endpoint is wired up and protected by OAuth — i.e.,
+ * invalid bearer tokens are rejected.
  */
 import { SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";

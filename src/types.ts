@@ -74,6 +74,5 @@ export type Props = {
 export type ToolContext = {
   env: Env;
   getProps: () => Props;
-  refreshUpstreamToken: () => Promise<MyMLHTokenResponse | null>;
   fetchMyMLHWithAutoRefresh: (url: string, init?: RequestInit) => Promise<Response>;
 };

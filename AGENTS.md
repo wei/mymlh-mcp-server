@@ -11,12 +11,11 @@ This repository implements an OAuth-enabled MCP remote HTTP server for MyMLH on 
   - `cookie.ts` — HMAC-SHA256 sign/verify, approved-clients cookie helpers, and `signState`/`verifyState` for OAuth state integrity.
   - `dialog.ts` — auto-escaping `renderApprovalDialog`.
   - `index.ts` — `clientIdAlreadyApproved`, `parseRedirectApproval`.
-- `src/mymlh/api.ts` — `makeMyMLHApi(env, getProps, updateProps)` returning `refreshUpstreamToken` + `fetchMyMLHWithAutoRefresh`.
+- `src/mymlh/api.ts` — `makeMyMLHApi(env, getProps, updateProps)` returning `fetchMyMLHWithAutoRefresh` (uses an internal `refreshUpstreamToken` for proactive/reactive refresh).
 - `src/mymlh/scopes.ts` — `MYMLH_AUTH_URL`, `MYMLH_TOKEN_URL`, `MYMLH_API_BASE`, `DEFAULT_MYMLH_SCOPES`, `ALL_MYMLH_SCOPES`.
 - `src/mcp/agent.ts` — `MyMCP extends McpAgent<Env, {}, Props>`; `init()` registers tools.
 - `src/mcp/tools/index.ts` — `registerAllTools(server, { env, getProps, updateProps })`.
   - `src/mcp/tools/user.ts` — registers `mymlh_get_user`.
-  - `src/mcp/tools/tokens.ts` — registers `mymlh_get_token`, `mymlh_refresh_token`.
 - `test/unit/` — pure-helper tests (cookie, dialog, approval, upstream, api).
 - `test/integration/` — workerd-runtime tests via `SELF.fetch` (unauthorized, authorize, callback, tools).
 - Config: `wrangler.jsonc`, `tsconfig.json`, `biome.json`, `vitest.config.mts`, `.dev.vars(.example)`, `.github/workflows/ci.yml`.

@@ -77,8 +77,7 @@ src/
     ├── agent.ts                   # MyMCP DO via McpAgent
     └── tools/
         ├── index.ts               # registerAllTools(server, deps)
-        ├── user.ts                # mymlh_get_user
-        └── tokens.ts              # mymlh_get_token, mymlh_refresh_token
+        └── user.ts                # mymlh_get_user
 
 test/
 ├── helpers/                       # stubFetch, injectTestSecrets

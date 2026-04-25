@@ -133,11 +133,9 @@ See [`mcp-remote` documentation](https://www.npmjs.com/package/mcp-remote#usage)
 
 Once connected and authenticated, you can use the following tools:
 
-| Tool                      | Description                                                        |
-| ------------------------- | ------------------------------------------------------------------ |
-| `mymlh_get_user`          | Fetch current MyMLH user profile                                   |
-| `mymlh_get_token`         | Return current MyMLH access token details                          |
-| `mymlh_refresh_token`     | Exchange MyMLH refresh_token for a new access token and persist it |
+| Tool             | Description                      |
+| ---------------- | -------------------------------- |
+| `mymlh_get_user` | Fetch current MyMLH user profile |
 
 ### Test with MCP Inspector
 
