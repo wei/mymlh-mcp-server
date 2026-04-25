@@ -61,18 +61,28 @@ Before you begin, please make sure you have the following installed:
 
 ```
 src/
-├── index.ts                 # MCP entry; registers tools
-├── mymlh-handler.ts         # OAuth approval, callback, redirects
-├── types.ts                 # Centralized types: Props, MyMLH*, ToolContext
-├── constants.ts             # Centralized constants (MyMLH API URLs, OAuth scopes)
-├── utils.ts                 # OAuth helpers (authorize URL, token helpers)
-├── workers-oauth-utils.ts   # Approval cookie + dialog helpers
-├── mymlh-api.ts             # MyMLH API helpers (refresh + auto-refresh)
-└── tools/
-    ├── index.ts             # registerAllTools (uses ToolContext from src/types.ts)
-    ├── user.ts              # mymlh_get_user
-    └── tokens.ts            # mymlh_refresh_token, mymlh_get_token
+├── index.ts                       # OAuthProvider wiring; exports MyMCP
+├── types.ts                       # Props, MyMLH*, ToolContext
+├── oauth/
+│   ├── handler.ts                 # Hono: /, /authorize, /callback
+│   ├── upstream.ts                # getUpstreamAuthorizeUrl, requestUpstreamToken
+│   └── approval/
+│       ├── cookie.ts              # HMAC cookie + state sign/verify
+│       ├── dialog.ts              # auto-escaping approval dialog
+│       └── index.ts               # clientIdAlreadyApproved, parseRedirectApproval
+├── mymlh/
+│   ├── api.ts                     # makeMyMLHApi: refresh + auto-refresh fetch
+│   └── scopes.ts                  # MyMLH OAuth scopes + endpoint constants
+└── mcp/
+    ├── agent.ts                   # MyMCP DO via McpAgent
+    └── tools/
+        ├── index.ts               # registerAllTools(server, deps)
+        └── user.ts                # mymlh_get_user
 
+test/
+├── helpers/                       # stubFetch, injectTestSecrets
+├── unit/                          # Pure helper tests (vi.stubGlobal for fetch)
+└── integration/                   # SELF.fetch tests against the wired worker
 ```
 
 ## Testing Your Changes
@@ -87,21 +97,21 @@ Connect the Inspector to your local server at `http://localhost:8788/mcp`. You'l
 
 ### Modular Tools Pattern
 
-Tools are modular and live under `src/tools/`:
+Tools are modular and live under `src/mcp/tools/`:
 
-– Use `ToolContext` from `src/types.ts` for `env`, `getProps()`, and MyMLH API helpers.
-- Add a registrar `registerX(server, ctx)` in a new file and import it in `src/tools/index.ts`. Multiple related tools can be colocated in a single module (e.g., `tokens.ts`) and registered via a group function (e.g., `registerTokenTools(server, ctx)`).
+- Use `ToolContext` from `src/types.ts` for `env`, `getProps()`, and MyMLH API helpers.
+- Add a registrar `registerX(server, ctx)` in a new file and import it in `src/mcp/tools/index.ts`. Multiple related tools can be colocated in a single module (e.g., `user.ts`) and registered via a group function (e.g., `registerUserTools(server, ctx)`).
 - Keep types strict (avoid `any`/`unknown`). If you need arguments, add a precise schema and types.
 
-Shared MyMLH API helpers are in `src/mymlh-api.ts` (token refresh via the generic `requestOAuthToken` + `fetchMyMLHWithAutoRefresh`) to keep logic consistent across tools.
+Shared MyMLH API helpers are in `src/mymlh/api.ts` (token refresh via the generic `requestUpstreamToken` + `fetchMyMLHWithAutoRefresh`) to keep logic consistent across tools.
 
 ### Add a New Tool
 
-1) Create a registrar in `src/tools/your-tool.ts`:
+1) Create a registrar in `src/mcp/tools/your-tool.ts`:
 
 ```ts
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ToolContext } from "../types";
+import type { ToolContext } from "../../types";
 
 export function registerYourTool(server: McpServer, ctx: ToolContext): void {
   server.tool("your_tool_name", "Describe your tool", /* schema */ {}, async () => {
@@ -112,7 +122,7 @@ export function registerYourTool(server: McpServer, ctx: ToolContext): void {
 }
 ```
 
-2) Wire it up in `src/tools/index.ts`:
+2) Wire it up in `src/mcp/tools/index.ts`:
 
 ```ts
 import { registerYourTool } from "./your-tool";
@@ -120,10 +130,10 @@ import { registerYourTool } from "./your-tool";
 registerYourTool(server, ctx);
 ```
 
-3) Check types and lint:
+3) Check types, lint, and tests:
 
 ```bash
-npm run type-check && npm run lint
+npm run type-check && npm run lint && npm test
 ```
 
 4) Test via Inspector on `http://localhost:8788/mcp`.
@@ -160,8 +170,8 @@ Also synchronize examples when renaming or changing:
 - Routes/endpoints (e.g., `/mcp`, `/authorize`, callback paths) and tool names.
 - Environment variables or secret names in `.dev.vars(.example)` and Wrangler.
 - `package.json` scripts and documented usage.
-- HTML approval dialog parameters/behavior in `workers-oauth-utils.ts`.
-- Project structure (e.g., new files in `src/tools/`, `src/mymlh-api.ts`).
+- HTML approval dialog parameters/behavior in `src/oauth/approval/dialog.ts`.
+- Project structure (e.g., new files in `src/mcp/tools/`, `src/mymlh/api.ts`).
 
 ### Pull Request Process
 

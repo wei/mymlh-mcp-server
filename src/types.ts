@@ -48,7 +48,6 @@ export interface MyMLHUser {
   address?: MyMLHAddress;
   professional_experience?: MyMLHEmploymentEntry[];
   education?: MyMLHEducationEntry[];
-  // future optional fields: event_preferences, social_profiles, etc.
 }
 
 export interface MyMLHTokenResponse {
@@ -69,13 +68,11 @@ export type Props = {
   tokenType?: string;
   scope?: string;
   expiresIn?: number;
-  // Unix time (seconds) when the current access token was issued
   accessTokenIssuedAt?: number;
 };
 
 export type ToolContext = {
   env: Env;
   getProps: () => Props;
-  refreshUpstreamToken: () => Promise<MyMLHTokenResponse | null>;
   fetchMyMLHWithAutoRefresh: (url: string, init?: RequestInit) => Promise<Response>;
 };

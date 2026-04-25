@@ -1,12 +1,26 @@
-import { MYMLH_TOKEN_URL } from "./constants";
-import type { MyMLHTokenResponse, Props } from "./types";
-import { requestOAuthToken } from "./utils";
+import { requestUpstreamToken } from "../oauth/upstream";
+import type { MyMLHTokenResponse, Props } from "../types";
+import { MYMLH_TOKEN_URL } from "./scopes";
+
+const REFRESH_THRESHOLD_SECONDS = 60;
 
 export function makeMyMLHApi(env: Env, getProps: () => Props, updateProps: (next: Props) => Promise<void>) {
+  async function clearStoredTokens(base: Props): Promise<void> {
+    await updateProps({
+      ...base,
+      accessToken: "",
+      refreshToken: undefined,
+      tokenType: undefined,
+      scope: undefined,
+      expiresIn: undefined,
+      accessTokenIssuedAt: undefined,
+    });
+  }
+
   async function refreshUpstreamToken(): Promise<MyMLHTokenResponse | null> {
     const props = getProps();
     if (!props.refreshToken) return null;
-    const [tokenJson] = await requestOAuthToken({
+    const [tokenJson] = await requestUpstreamToken({
       upstream_url: MYMLH_TOKEN_URL,
       client_id: env.MYMLH_CLIENT_ID,
       client_secret: env.MYMLH_CLIENT_SECRET,
@@ -23,19 +37,10 @@ export function makeMyMLHApi(env: Env, getProps: () => Props, updateProps: (next
         expiresIn: tokenJson.expires_in ?? props.expiresIn,
         accessTokenIssuedAt: Math.floor(Date.now() / 1000),
       });
-    } else {
-      await updateProps({
-        ...props,
-        accessToken: "",
-        refreshToken: undefined,
-        tokenType: undefined,
-        scope: undefined,
-        expiresIn: undefined,
-        accessTokenIssuedAt: undefined,
-      });
-      return null;
+      return tokenJson;
     }
-    return tokenJson;
+    await clearStoredTokens(props);
+    return null;
   }
 
   async function fetchMyMLHWithAutoRefresh(url: string, init?: RequestInit): Promise<Response> {
@@ -44,30 +49,33 @@ export function makeMyMLHApi(env: Env, getProps: () => Props, updateProps: (next
     const issuedAt = props.accessTokenIssuedAt ?? 0;
     const expiresIn = props.expiresIn ?? 0;
     const expAt = issuedAt + expiresIn;
-    const refreshThresholdSeconds = 60; // proactively refresh ~1 minute before expiry
 
     let effectiveAccessToken = props.accessToken;
-    if (expiresIn && now >= expAt - refreshThresholdSeconds) {
+    let didProactiveRefresh = false;
+    if (expiresIn && now >= expAt - REFRESH_THRESHOLD_SECONDS) {
       const refreshed = await refreshUpstreamToken();
       if (refreshed?.access_token) {
         effectiveAccessToken = refreshed.access_token;
+        didProactiveRefresh = true;
       }
     }
 
-    const withAuth = async (token: string): Promise<RequestInit> => {
-      const headers = new Headers(init?.headers as HeadersInit);
+    const withAuth = (token: string): RequestInit => {
+      const headers = new Headers(init?.headers);
       headers.set("Authorization", `Bearer ${token}`);
-      return { ...(init ?? {}), headers } satisfies RequestInit;
+      return { ...(init ?? {}), headers };
     };
 
-    let resp = await fetch(url, await withAuth(effectiveAccessToken));
-
-    if (resp.status === 401) {
+    let resp = await fetch(url, withAuth(effectiveAccessToken));
+    // On 401: skip the reactive refresh if we just refreshed proactively (token already
+    // unusable) or have no refresh token (retry would re-issue the same 401).
+    if (resp.status === 401 && !didProactiveRefresh && getProps().refreshToken) {
       const refreshed = await refreshUpstreamToken();
-      const retryProps = getProps();
-      const retryToken = refreshed?.access_token ?? retryProps.accessToken;
-      resp = await fetch(url, await withAuth(retryToken));
+      if (refreshed?.access_token) {
+        resp = await fetch(url, withAuth(refreshed.access_token));
+      }
     }
+    if (resp.status === 401) await clearStoredTokens(getProps());
     return resp;
   }
 

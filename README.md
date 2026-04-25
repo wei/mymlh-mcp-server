@@ -6,6 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Built with Hono](https://img.shields.io/badge/Built_with-Hono-E36002?logo=hono&logoColor=white)](https://hono.dev/)
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://wei.mit-license.org)
+[![CI](https://github.com/wei/mymlh-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/wei/mymlh-mcp-server/actions/workflows/ci.yml)
 
 A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) server that provides secure, OAuth-authenticated access to [MyMLH](https://my.mlh.io/). This server enables AI assistants and MCP clients to interact with the MyMLH API on behalf of users.
 
@@ -132,11 +133,9 @@ See [`mcp-remote` documentation](https://www.npmjs.com/package/mcp-remote#usage)
 
 Once connected and authenticated, you can use the following tools:
 
-| Tool                      | Description                                                        |
-| ------------------------- | ------------------------------------------------------------------ |
-| `mymlh_get_user`          | Fetch current MyMLH user profile                                   |
-| `mymlh_get_token`         | Return current MyMLH access token details                          |
-| `mymlh_refresh_token`     | Exchange MyMLH refresh_token for a new access token and persist it |
+| Tool             | Description                      |
+| ---------------- | -------------------------------- |
+| `mymlh_get_user` | Fetch current MyMLH user profile |
 
 ### Test with MCP Inspector
 

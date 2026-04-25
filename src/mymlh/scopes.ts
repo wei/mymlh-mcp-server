@@ -6,7 +6,6 @@ export const DEFAULT_MYMLH_SCOPES = [
   "public",
   "offline_access",
   "user:read:profile",
-
   // Adding more scopes as default until MLH OAuth supports re-prompt consent screen
   "user:read:education",
   "user:read:employment",
