@@ -1,0 +1,73 @@
+import { env, SELF } from "cloudflare:test";
+import { beforeEach, describe, expect, it } from "vitest";
+
+async function registerClient() {
+  const resp = await SELF.fetch("https://worker.test/register", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      client_name: "Test Client",
+      redirect_uris: ["https://client.test/cb"],
+      token_endpoint_auth_method: "none",
+    }),
+  });
+  expect(resp.status).toBe(201);
+  return (await resp.json()) as { client_id: string; redirect_uris: string[] };
+}
+
+describe("/authorize", () => {
+  beforeEach(() => {
+    // Attempt to inject test secrets — may or may not mutate the Worker isolate's env.
+    // If these don't reach the isolate, the .dev.vars values are used instead.
+    (env as unknown as Record<string, string>).MYMLH_CLIENT_ID = "test-client-id";
+    (env as unknown as Record<string, string>).MYMLH_CLIENT_SECRET = "test-client-secret";
+    (env as unknown as Record<string, string>).COOKIE_ENCRYPTION_KEY = "test-cookie-secret";
+  });
+
+  it("GET /authorize without approval cookie renders dialog", async () => {
+    const { client_id, redirect_uris } = await registerClient();
+    const url = new URL("https://worker.test/authorize");
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("client_id", client_id);
+    url.searchParams.set("redirect_uri", redirect_uris[0]);
+    url.searchParams.set("code_challenge", "c".repeat(43));
+    url.searchParams.set("code_challenge_method", "S256");
+    url.searchParams.set("state", "xyz");
+
+    const resp = await SELF.fetch(url.href);
+    expect(resp.status).toBe(200);
+    expect(resp.headers.get("content-type")).toContain("text/html");
+    const html = await resp.text();
+    expect(html).toContain("Test Client");
+    expect(html).toContain("MyMLH MCP Server");
+  });
+
+  it("POST /authorize with encoded state redirects to MyMLH authorize URL", async () => {
+    const { client_id, redirect_uris } = await registerClient();
+    const oauthReqInfo = {
+      clientId: client_id,
+      redirectUri: redirect_uris[0],
+      scope: [],
+      state: "xyz",
+      responseType: "code",
+      codeChallenge: "c".repeat(43),
+      codeChallengeMethod: "S256",
+    };
+    const form = new FormData();
+    form.set("state", btoa(JSON.stringify({ oauthReqInfo })));
+
+    const resp = await SELF.fetch("https://worker.test/authorize", {
+      method: "POST",
+      body: form,
+      redirect: "manual",
+    });
+    expect(resp.status).toBe(302);
+    const loc = resp.headers.get("location")!;
+    expect(loc).toContain("https://my.mlh.io/oauth/authorize");
+    expect(loc).toContain("prompt=consent");
+    // client_id in redirect URL comes from MYMLH_CLIENT_ID secret (either injected or from .dev.vars)
+    expect(loc).toMatch(/client_id=[^&]+/);
+    expect(resp.headers.get("set-cookie")).toContain("mcp-approved-clients=");
+    expect(resp.headers.get("set-cookie")).toContain("Max-Age=5");
+  });
+});
