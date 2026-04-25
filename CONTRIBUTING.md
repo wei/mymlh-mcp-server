@@ -100,7 +100,7 @@ Connect the Inspector to your local server at `http://localhost:8788/mcp`. You'l
 Tools are modular and live under `src/mcp/tools/`:
 
 - Use `ToolContext` from `src/types.ts` for `env`, `getProps()`, and MyMLH API helpers.
-- Add a registrar `registerX(server, ctx)` in a new file and import it in `src/mcp/tools/index.ts`. Multiple related tools can be colocated in a single module (e.g., `tokens.ts`) and registered via a group function (e.g., `registerTokenTools(server, ctx)`).
+- Add a registrar `registerX(server, ctx)` in a new file and import it in `src/mcp/tools/index.ts`. Multiple related tools can be colocated in a single module (e.g., `user.ts`) and registered via a group function (e.g., `registerUserTools(server, ctx)`).
 - Keep types strict (avoid `any`/`unknown`). If you need arguments, add a precise schema and types.
 
 Shared MyMLH API helpers are in `src/mymlh/api.ts` (token refresh via the generic `requestUpstreamToken` + `fetchMyMLHWithAutoRefresh`) to keep logic consistent across tools.

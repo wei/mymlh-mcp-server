@@ -50,7 +50,7 @@ Environment Setup:
 - Environment testing: deploy to `alt` or `fallback` via `npm run deploy:alt` / `deploy:fallback` for staging.
 
 ### Adding a new tool (pattern)
-- Create a file in `src/mcp/tools/` and export `registerX(server, ctx)` that calls `server.tool(...)`. You may group related tools in one module (e.g., `tokens.ts`).
+- Create a file in `src/mcp/tools/` and export `registerX(server, ctx)` that calls `server.tool(...)`. You may group related tools in one module (e.g., `user.ts`).
 - Use the `ToolContext` from `src/types.ts`: access `env`, `getProps()`, and the MyMLH API helpers.
 - Import and call your registrar(s) from `src/mcp/tools/index.ts` inside `registerAllTools`.
 - Keep types strict (no `any`/`unknown`); extend `Props` or add precise interfaces if needed.
