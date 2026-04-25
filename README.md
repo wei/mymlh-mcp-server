@@ -20,7 +20,7 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) s
 
 ## Quick Start
 
-You can connect to our publicly hosted instance using any MCP client that supports the [Streamable HTTP transport with OAuth](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization).
+You can connect to our publicly hosted instance using any MCP client that supports the [Streamable HTTP transport with OAuth](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization).
 
 **Endpoint**: `https://mymlh-mcp.git.ci/mcp`
 
@@ -89,23 +89,45 @@ claude mcp add --transport http mymlh https://mymlh-mcp.git.ci/mcp
 
 **Gemini CLI:**
 
-_Gemini currently only supports the deprecated SSE protocol._
+```sh
+gemini mcp add --transport http mymlh https://mymlh-mcp.git.ci/mcp
+```
+
+**Codex CLI:**
+
+```sh
+codex mcp add mymlh --url https://mymlh-mcp.git.ci/mcp
+```
+
+**Cline:**
 
 ```json
 {
   "mcpServers": {
     "mymlh": {
-      "url": "https://mymlh-mcp.git.ci/sse"
+      "type": "streamableHttp",
+      "url": "https://mymlh-mcp.git.ci/mcp"
     }
   }
 }
 ```
 
-**Roo Code, Cline, KiloCode:**
+**Roo Code:**
 
-Although these clients support Streamable HTTP transport, they do not yet support the OAuth authentication flow. Please use the fallback option below. See open feature requests for [Roo Code](https://github.com/RooCodeInc/Roo-Code/issues/7296), [Cline](https://github.com/cline/cline/issues/4523).
+```json
+{
+  "mcpServers": {
+    "mymlh": {
+      "type": "streamable-http",
+      "url": "https://mymlh-mcp.git.ci/mcp"
+    }
+  }
+}
+```
 
-For other clients, please consult their documentation for connecting to an MCP server. If you see 401 errors, the client likely does not support [Streamable HTTP with OAuth](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization) and you will need to use the fallback option below.
+**Other clients:**
+
+Consult your client's documentation for connecting to an MCP server. If you see 401 errors, the client likely does not support [Streamable HTTP with OAuth](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization) and you will need to use the fallback option below.
 
 ### Fallback Option
 
