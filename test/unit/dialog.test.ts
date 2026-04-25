@@ -9,6 +9,7 @@ const stubClient = {
   tosUri: "https://example.com/tos",
   redirectUris: ["https://example.com/cb"],
   contacts: ["dev@example.com"],
+  tokenEndpointAuthMethod: "client_secret_basic" as const,
 };
 
 function makeRequest() {
@@ -45,7 +46,7 @@ describe("renderApprovalDialog", () => {
 
   it("omits optional fields when absent", async () => {
     const resp = renderApprovalDialog(makeRequest(), {
-      client: { clientId: "c-2", clientName: "Minimal" },
+      client: { clientId: "c-2", clientName: "Minimal", redirectUris: [], tokenEndpointAuthMethod: "none" },
       server: { name: "S" },
       state: { oauthReqInfo: { clientId: "c-2" } },
     });
