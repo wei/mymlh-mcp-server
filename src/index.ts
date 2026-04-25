@@ -1,8 +1,17 @@
-// Stub entrypoint replaced by real OAuthProvider wiring in Task 14.
-// Required so wrangler/vitest-pool-workers can bundle the worker for unit tests
-// before the integration wiring is in place.
-export default {
-  async fetch(): Promise<Response> {
-    return new Response("not yet wired", { status: 503 });
+import OAuthProvider from "@cloudflare/workers-oauth-provider";
+import { MyMCP } from "./mcp/agent";
+import { MyMLHHandler } from "./oauth/handler";
+
+export { MyMCP };
+
+export default new OAuthProvider({
+  apiHandlers: {
+    "/sse": MyMCP.serveSSE("/sse"),
+    "/mcp": MyMCP.serve("/mcp"),
   },
-} satisfies ExportedHandler;
+  authorizeEndpoint: "/authorize",
+  clientRegistrationEndpoint: "/register",
+  defaultHandler: MyMLHHandler as unknown as ExportedHandler,
+  refreshTokenTTL: 24 * 60 * 60,
+  tokenEndpoint: "/token",
+});
