@@ -1,6 +1,6 @@
 {
   "name": "mymlh-mcp-server",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "deploy:all": "npm run deploy:production && npm run deploy:alt && npm run deploy:fallback",
