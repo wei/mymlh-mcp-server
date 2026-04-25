@@ -8,12 +8,10 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
   server = new McpServer({ name, version });
 
   async init() {
-    await registerAllTools(this.server, {
+    registerAllTools(this.server, {
       env: this.env,
       getProps: () => this.props || ({} as Props),
-      updateProps: async (next: Props) => {
-        await this.updateProps(next);
-      },
+      updateProps: (next: Props) => this.updateProps(next),
     });
   }
 }

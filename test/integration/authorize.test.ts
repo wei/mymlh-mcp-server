@@ -1,5 +1,6 @@
-import { env, SELF } from "cloudflare:test";
+import { SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
+import { injectTestSecrets } from "../helpers/setup-env";
 
 async function registerClient() {
   const resp = await SELF.fetch("https://worker.test/register", {
@@ -17,11 +18,7 @@ async function registerClient() {
 
 describe("/authorize", () => {
   beforeEach(() => {
-    // Attempt to inject test secrets — may or may not mutate the Worker isolate's env.
-    // If these don't reach the isolate, the .dev.vars values are used instead.
-    (env as unknown as Record<string, string>).MYMLH_CLIENT_ID = "test-client-id";
-    (env as unknown as Record<string, string>).MYMLH_CLIENT_SECRET = "test-client-secret";
-    (env as unknown as Record<string, string>).COOKIE_ENCRYPTION_KEY = "test-cookie-secret";
+    injectTestSecrets();
   });
 
   it("GET /authorize without approval cookie renders dialog", async () => {
@@ -62,7 +59,7 @@ describe("/authorize", () => {
       redirect: "manual",
     });
     expect(resp.status).toBe(302);
-    const loc = resp.headers.get("location")!;
+    const loc = resp.headers.get("location") ?? "";
     expect(loc).toContain("https://my.mlh.io/oauth/authorize");
     expect(loc).toContain("prompt=consent");
     // client_id in redirect URL comes from MYMLH_CLIENT_ID secret (either injected or from .dev.vars)

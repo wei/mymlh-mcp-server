@@ -9,13 +9,12 @@
  * by unit tests in test/unit/. This file verifies that the /mcp endpoint is wired up and protected
  * by OAuth — i.e., invalid bearer tokens are rejected.
  */
-import { env, SELF } from "cloudflare:test";
+import { SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
+import { injectTestSecrets } from "../helpers/setup-env";
 
 beforeEach(() => {
-  (env as unknown as Record<string, string>).MYMLH_CLIENT_ID = "cid";
-  (env as unknown as Record<string, string>).MYMLH_CLIENT_SECRET = "sec";
-  (env as unknown as Record<string, string>).COOKIE_ENCRYPTION_KEY = "cookie-secret";
+  injectTestSecrets({ MYMLH_CLIENT_ID: "cid", MYMLH_CLIENT_SECRET: "sec", COOKIE_ENCRYPTION_KEY: "cookie-secret" });
 });
 
 describe("/mcp tool calls", () => {

@@ -74,31 +74,3 @@ export async function requestUpstreamToken({
     return [null, new Response("Upstream token request failed", { status: 502 })];
   }
 }
-
-export async function fetchUpstreamAuthToken({
-  client_id,
-  client_secret,
-  code,
-  redirect_uri,
-  upstream_url,
-}: {
-  code: string | undefined;
-  upstream_url: string;
-  client_secret: string;
-  redirect_uri: string;
-  client_id: string;
-}): Promise<[string, null, MyMLHTokenResponse?] | [null, Response]> {
-  if (!code) return [null, new Response("Missing code", { status: 400 })];
-  const [json, err] = await requestUpstreamToken({
-    upstream_url,
-    client_id,
-    client_secret,
-    grant_type: "authorization_code",
-    code,
-    redirect_uri,
-  });
-  if (err) return [null, err];
-  const accessToken = json?.access_token ?? null;
-  if (!accessToken) return [null, new Response("Missing access token", { status: 400 })];
-  return [accessToken, null, json];
-}

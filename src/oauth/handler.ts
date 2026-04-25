@@ -1,9 +1,15 @@
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { Hono } from "hono";
+import { name as pkgName } from "../../package.json";
 import { DEFAULT_MYMLH_SCOPES, MYMLH_API_BASE, MYMLH_AUTH_URL, MYMLH_TOKEN_URL } from "../mymlh/scopes";
-import type { MyMLHUser, Props } from "../types";
+import type { MyMLHTokenResponse, MyMLHUser, Props } from "../types";
 import { clientIdAlreadyApproved, parseRedirectApproval, renderApprovalDialog } from "./approval";
-import { fetchUpstreamAuthToken, getUpstreamAuthorizeUrl } from "./upstream";
+import { getUpstreamAuthorizeUrl, requestUpstreamToken } from "./upstream";
+
+const SERVER_DISPLAY_NAME = "MyMLH MCP Server";
+const SERVER_DESCRIPTION = "MCP Remote Server using MyMLH (v4) for authentication.";
+const SERVER_LOGO = "https://static.mlh.io/brand-assets/logo/official/mlh-logo-color.svg";
+const APPROVAL_REPROMPT_SECONDS = 5;
 
 type Bindings = Env & { OAUTH_PROVIDER: OAuthHelpers };
 
@@ -11,7 +17,7 @@ const app = new Hono<{ Bindings: Bindings }>();
 
 app.get("/", (c) =>
   c.json({
-    name: "mymlh-mcp-server",
+    name: pkgName,
     env: c.env.ENV_NAME ?? "unknown",
     endpoints: ["/mcp", "/sse", "/authorize", "/callback", "/token", "/register"],
   }),
@@ -35,19 +41,18 @@ app.get("/authorize", async (c) => {
 
   return renderApprovalDialog(c.req.raw, {
     client: await c.env.OAUTH_PROVIDER.lookupClient(clientId),
-    server: {
-      description: "MCP Remote Server using MyMLH (v4) for authentication.",
-      logo: "https://static.mlh.io/brand-assets/logo/official/mlh-logo-color.svg",
-      name: "MyMLH MCP Server",
-    },
+    server: { description: SERVER_DESCRIPTION, logo: SERVER_LOGO, name: SERVER_DISPLAY_NAME },
     state: { oauthReqInfo },
   });
 });
 
 app.post("/authorize", async (c) => {
   try {
-    // 5-second cookie forces re-prompt on re-login
-    const { state, headers } = await parseRedirectApproval(c.req.raw, c.env.COOKIE_ENCRYPTION_KEY, 5);
+    const { state, headers } = await parseRedirectApproval(
+      c.req.raw,
+      c.env.COOKIE_ENCRYPTION_KEY,
+      APPROVAL_REPROMPT_SECONDS,
+    );
     if (!state.oauthReqInfo) return c.text("Invalid request", 400);
     return redirectToMyMLH(c.req.raw, state.oauthReqInfo, c.env.MYMLH_CLIENT_ID, headers);
   } catch (err) {
@@ -88,14 +93,20 @@ app.get("/callback", async (c) => {
   }
   if (!oauthReqInfo.clientId) return c.text("Invalid state", 400);
 
-  const [accessToken, errResponse, tokenResponse] = await fetchUpstreamAuthToken({
+  const code = c.req.query("code");
+  if (!code) return c.text("Missing code", 400);
+
+  const [tokenResponse, errResponse] = await requestUpstreamToken({
     client_id: c.env.MYMLH_CLIENT_ID,
     client_secret: c.env.MYMLH_CLIENT_SECRET,
-    code: c.req.query("code"),
-    redirect_uri: new URL("/callback", c.req.url).href,
+    grant_type: "authorization_code",
+    code,
+    redirect_uri: new URL("/callback", c.req.raw.url).href,
     upstream_url: MYMLH_TOKEN_URL,
   });
   if (errResponse) return errResponse;
+  const accessToken = tokenResponse.access_token;
+  if (!accessToken) return c.text("Missing access token", 400);
 
   const meResp = await fetch(`${MYMLH_API_BASE}/users/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -104,6 +115,7 @@ app.get("/callback", async (c) => {
   const me = (await meResp.json()) as MyMLHUser;
   const { id, first_name, last_name, email } = me;
 
+  const tok = tokenResponse satisfies MyMLHTokenResponse;
   const { redirectTo } = await c.env.OAUTH_PROVIDER.completeAuthorization({
     metadata: { label: `${first_name} ${last_name}`.trim() },
     props: {
@@ -112,11 +124,11 @@ app.get("/callback", async (c) => {
       first_name,
       last_name,
       id,
-      refreshToken: tokenResponse?.refresh_token,
-      tokenType: tokenResponse?.token_type,
-      expiresIn: tokenResponse?.expires_in,
+      refreshToken: tok.refresh_token,
+      tokenType: tok.token_type,
+      expiresIn: tok.expires_in,
       accessTokenIssuedAt: Math.floor(Date.now() / 1000),
-      scope: tokenResponse?.scope,
+      scope: tok.scope,
     } satisfies Props,
     request: oauthReqInfo,
     scope: oauthReqInfo.scope,
