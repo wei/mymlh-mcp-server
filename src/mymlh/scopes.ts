@@ -1,4 +1,8 @@
-export const MYMLH_AUTH_URL = "https://my.mlh.io/oauth/authorize";
+// MLH migrated the browser-facing authorize endpoint to www.mlh.com. my.mlh.io/oauth/authorize
+// now issues a 308 to www.mlh.com, and unauthenticated logins break on that hop (malformed
+// return_to -> 500). Point directly at the canonical host to skip the redirect.
+export const MYMLH_AUTH_URL = "https://www.mlh.com/oauth/authorize";
+// Token endpoint is unaffected (no redirect on either host); left on my.mlh.io where it is verified working.
 export const MYMLH_TOKEN_URL = "https://my.mlh.io/oauth/token";
 export const MYMLH_API_BASE = "https://api.mlh.com/v4";
 

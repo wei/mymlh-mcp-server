@@ -60,7 +60,7 @@ describe("/authorize", () => {
     });
     expect(resp.status).toBe(302);
     const loc = resp.headers.get("location") ?? "";
-    expect(loc).toContain("https://my.mlh.io/oauth/authorize");
+    expect(loc).toContain("https://www.mlh.com/oauth/authorize");
     expect(loc).toContain("prompt=consent");
     expect(loc).toContain("client_id=test-client-id");
     expect(resp.headers.get("set-cookie")).toContain("mcp-approved-clients=");
