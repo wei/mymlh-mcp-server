@@ -21,7 +21,8 @@ This blocks all new logins to our app (`client_id` `YfAUElSH...`).
 
 The full chain for a logged-out user:
 
-1. `POST https://mymlh-mcp.git.ci/authorize` (our server, user clicks "Approve")
+0. `GET https://mymlh-mcp.git.ci/authorize?client_id=TB5ewzFzu3XcKylF&response_type=code&code_challenge=CVVw7G3JjH4HwjuC_fFvS5m3hl71ofkHojGPB4l2krs&code_challenge_method=S256&resource=https://mymlh-mcp.git.ci/mcp&redirect_uri=http://127.0.0.1:33418/&state=02p38Qna6lUR5Jp5m9RN2A%3D%3D`
+1. `POST https://mymlh-mcp.git.ci/authorize` (user clicks "Approve")
    → `302` to `https://www.mlh.com/oauth/authorize?...`
 2. `GET https://www.mlh.com/oauth/authorize?client_id=YfAUElSH...&redirect_uri=https%3A%2F%2Fmymlh-mcp.git.ci%2Fcallback&scope=public+offline_access+user%3Aread%3Aprofile+user%3Aread%3Aeducation+user%3Aread%3Aemployment&response_type=code&prompt=consent`
    → `302` to `https://www.mlh.com/signin?return_to=<correctly-encoded authorize URL>`
@@ -45,22 +46,35 @@ to the root cause.**
 - Trigger: run the authorization-code flow while **not** signed in on
   `www.mlh.com`, e.g. open our authorize endpoint and click "Approve":
   `https://mymlh-mcp.git.ci/authorize?client_id=TB5ewzFzu3XcKylF&response_type=code&code_challenge=...&code_challenge_method=S256&redirect_uri=http://127.0.0.1:33418/&state=...`
+    e.g. https://mymlh-mcp.git.ci/authorize?client_id=TB5ewzFzu3XcKylF&response_type=code&code_challenge=CVVw7G3JjH4HwjuC_fFvS5m3hl71ofkHojGPB4l2krs&code_challenge_method=S256&resource=https://mymlh-mcp.git.ci/mcp&redirect_uri=http://127.0.0.1:33418/&state=02p38Qna6lUR5Jp5m9RN2A%3D%3D
 - Result: land on `www.mlh.com/signin?return_to=...` → 500.
 
-### What does and does not reproduce it
 
-- **Reproduces:** a real browser that has previously visited `www.mlh.com`
-  (i.e. carries `www.mlh.com` session state). The 500 appears on the `/signin`
-  GET, before any credentials are entered.
-- **Does NOT reproduce:** a cookie-less request. `curl` (and, we expect, a clean
-  incognito window) gets `200` on the exact same `/signin?return_to=...` URL and
-  renders the login form. Injecting a garbage `_mlh_session` / `remember_user_token`
-  cookie also stays `200`. So the crash depends on specific, valid `www.mlh.com`
-  session state, not on the presence of any cookie.
+### Minimal isolation: the crash is triggered by the `state` value
 
-This points at the code path that handles `return_to` for a request that carries
-`www.mlh.com` session state (e.g. redirecting an already-recognized visitor to
-an OAuth `authorize` URL).
+We reproduced the 500 deterministically in a clean browser (including a fresh
+incognito window, no cookies). We then held the entire authorize request
+constant and changed **only the `state` parameter**:
+
+| `state` value | `/signin` result |
+|---|---|
+| an opaque token (e.g. `opaquetoken12345`) | **200** — sign-in page renders |
+| our real `state` (base64 that decodes to JSON) | **500** |
+
+Everything else was identical (same `client_id`, `redirect_uri`, `scope`,
+cookies, browser). Scope count, cookies, and `return_to` encoding made no
+difference; only the `state` content did.
+
+Our `state` is an opaque signed token of the form `‹hmac-hex›.‹base64›`. The
+base64 segment decodes to JSON such as
+`{"responseType":"code","redirectUri":"http://127.0.0.1:33418/",...}` — which
+contains `"` and `://`. On the wire the `state` is a plain opaque string (no
+quotes). The 500 only makes sense if MLH's sign-in **decodes** our `state` and
+its contents (the `"` Jon sees in the logs, or the embedded URL) break the
+sign-in / `return_to` handling.
+
+Per RFC 6749 (§4.1.1, §10.12), `state` is opaque to the authorization server and
+must be round-tripped untouched. Decoding or parsing it is the defect.
 
 ## Related: whole-domain redirect, docs not updated
 
@@ -76,8 +90,10 @@ an OAuth `authorize` URL).
 
 ## Requested fix
 
-1. Fix the `www.mlh.com/signin` 500 for the OAuth authorization-code flow — start
-   from `x-request-id 931eda3e-390a-50e4-f28e-1bce5f01cb51`.
+1. Treat `state` as opaque: stop decoding/parsing it in the `www.mlh.com` sign-in
+   / OAuth flow and round-trip it untouched (RFC 6749 §4.1.1, §10.12). That
+   removes the 500 — an opaque `state` already reaches the sign-in page fine.
+   Start from `x-request-id 931eda3e-390a-50e4-f28e-1bce5f01cb51`.
 2. Confirm the canonical OAuth host (`my.mlh.io` vs `www.mlh.com`) and align the
    developer docs.
 
