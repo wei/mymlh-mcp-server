@@ -1,135 +1,87 @@
-# MLH OAuth: unauthenticated `/oauth/authorize` breaks via the `my.mlh.io` → `www.mlh.com` 308 redirect
+# MLH OAuth: `www.mlh.com/signin` returns 500 for the authorization-code flow (logged-out users)
 
-**Reported by:** MyMLH MCP Server maintainers
+**Reported by:** MyMLH MCP Server maintainers (`https://mymlh-mcp.git.ci`)
 **Date:** 2026-07-10
-**Affected hosts:** `my.mlh.io`, `www.mlh.com`
-**Severity:** High. Blocks every OAuth login for a not-yet-authenticated user.
+**Affected host:** `www.mlh.com` (sign-in / OAuth), reached via the `my.mlh.io` → `www.mlh.com` redirect
+**Severity:** High. Blocks OAuth login for any user who is not already signed in on `www.mlh.com`.
 
 ## Summary
 
-An OAuth client that starts the authorization flow at the documented endpoint
-`https://my.mlh.io/oauth/authorize` receives a `308 Permanent Redirect` to
-`https://www.mlh.com/oauth/authorize`. For a user who is **not** logged in, the
-resulting `www.mlh.com` sign-in flow builds a malformed `return_to` value (the
-base URL is left un-encoded) and the flow ends in a **500 Internal Server
-Error**.
+When a logged-out user runs the OAuth 2.0 authorization-code flow, MLH sends
+them to `https://www.mlh.com/signin?return_to=<oauth authorize URL>`, and that
+sign-in page returns **500 Internal Server Error**. The 500 comes from MLH's
+own origin (`via: heroku-router`, `x-runtime` present), while the `return_to`
+value on the wire is correctly percent-encoded. A user who already has an active
+`www.mlh.com` session does not hit the sign-in leg, so the flow succeeds for
+them. That is why the failure only appears for logged-out users.
 
-A user who is **already** logged in never hits the sign-in leg, so the same
-authorize request succeeds. That is why the bug only appears for logged-out
-users.
+This blocks all new logins to our app (`client_id` `YfAUElSH...`).
 
-## Impact
+## What we observed (from a real browser HAR)
 
-- Any OAuth client still pointing at `my.mlh.io/oauth/authorize` (the host in
-  MLH's current developer docs) cannot log in a new/logged-out user.
-- The failure is silent from the client's side: MLH returns its own 500 page,
-  so the client has nothing to act on.
+The full chain for a logged-out user:
 
-## Environment
+1. `POST https://mymlh-mcp.git.ci/authorize` (our server, user clicks "Approve")
+   → `302` to `https://www.mlh.com/oauth/authorize?...`
+2. `GET https://www.mlh.com/oauth/authorize?client_id=YfAUElSH...&redirect_uri=https%3A%2F%2Fmymlh-mcp.git.ci%2Fcallback&scope=public+offline_access+user%3Aread%3Aprofile+user%3Aread%3Aeducation+user%3Aread%3Aemployment&response_type=code&prompt=consent`
+   → `302` to `https://www.mlh.com/signin?return_to=<correctly-encoded authorize URL>`
+   - `x-request-id: ecb90db6-7ed4-de4f-3888-e928c1ccb604`
+3. `GET https://www.mlh.com/signin?return_to=https%3A%2F%2Fwww.mlh.com%2Foauth%2Fauthorize%3F...`
+   → **`500 Internal Server Error`**
+   - `x-request-id: 931eda3e-390a-50e4-f28e-1bce5f01cb51`
+   - `x-runtime: 0.030073`, `via: 2.0 heroku-router`, `content-type: text/html`
 
-- Client: MyMLH MCP Server (`https://mymlh-mcp.git.ci`), OAuth 2.0 + PKCE.
-- Registered redirect URI: `https://mymlh-mcp.git.ci/callback`.
-- Requested scopes: `public offline_access user:read:profile user:read:education user:read:employment`.
+The `return_to` in step 3 is well-formed and fully percent-encoded
+(`https%3A%2F%2Fwww.mlh.com%2Foauth%2Fauthorize%3Fclient_id%3D...`). The 500 is
+not a client-side or encoding problem; MLH's sign-in controller raises while
+handling the request.
+
+**Please pull `x-request-id 931eda3e-390a-50e4-f28e-1bce5f01cb51` (and the
+preceding `ecb90db6-...`) from your logs — the stack trace is the fastest path
+to the root cause.**
 
 ## Reproduction
 
-### Step 1 — client sends the user to the documented authorize endpoint
+- Trigger: run the authorization-code flow while **not** signed in on
+  `www.mlh.com`, e.g. open our authorize endpoint and click "Approve":
+  `https://mymlh-mcp.git.ci/authorize?client_id=TB5ewzFzu3XcKylF&response_type=code&code_challenge=...&code_challenge_method=S256&redirect_uri=http://127.0.0.1:33418/&state=...`
+- Result: land on `www.mlh.com/signin?return_to=...` → 500.
 
-```
-https://my.mlh.io/oauth/authorize
-  ?client_id=<CLIENT_ID>
-  &redirect_uri=https%3A%2F%2Fmymlh-mcp.git.ci%2Fcallback
-  &scope=public+offline_access+user%3Aread%3Aprofile+user%3Aread%3Aeducation+user%3Aread%3Aemployment
-  &state=<STATE>
-  &response_type=code
-  &prompt=consent
-```
+### What does and does not reproduce it
 
-`my.mlh.io` answers with a permanent redirect to `www.mlh.com`:
+- **Reproduces:** a real browser that has previously visited `www.mlh.com`
+  (i.e. carries `www.mlh.com` session state). The 500 appears on the `/signin`
+  GET, before any credentials are entered.
+- **Does NOT reproduce:** a cookie-less request. `curl` (and, we expect, a clean
+  incognito window) gets `200` on the exact same `/signin?return_to=...` URL and
+  renders the login form. Injecting a garbage `_mlh_session` / `remember_user_token`
+  cookie also stays `200`. So the crash depends on specific, valid `www.mlh.com`
+  session state, not on the presence of any cookie.
 
-```console
-$ curl -sS -D - -o /dev/null 'https://my.mlh.io/oauth/authorize?client_id=...&redirect_uri=...&scope=...&response_type=code&prompt=consent'
-HTTP/2 308
-location: https://www.mlh.com/oauth/authorize?client_id=...&redirect_uri=...&scope=public+offline_access+...&response_type=code&prompt=consent
-server: cloudflare
-```
+This points at the code path that handles `return_to` for a request that carries
+`www.mlh.com` session state (e.g. redirecting an already-recognized visitor to
+an OAuth `authorize` URL).
 
-### Step 2 — `www.mlh.com/oauth/authorize` sends a logged-out user to sign-in
+## Related: whole-domain redirect, docs not updated
 
-The browser then lands on a sign-in URL whose `return_to` is **malformed**. The
-scheme, host, and path of the inner URL are not percent-encoded:
+- The entire `my.mlh.io` domain now issues `308 Permanent Redirect` to
+  `www.mlh.com` (including `my.mlh.io/oauth/authorize` and `my.mlh.io/signin`).
+- Your developer docs (`https://my.mlh.io/developers/docs`) still list
+  `my.mlh.io/oauth/authorize` as the OAuth endpoint. If `www.mlh.com` is now the
+  intended host, the docs should be updated; if not, the domain-wide 308 may be
+  unintended.
+- The token endpoint responds normally on both hosts (Doorkeeper `401` on bad
+  creds), so token exchange is unaffected. Only the browser-facing sign-in leg
+  500s.
 
-```
-https://www.mlh.com/signin?return_to=https://www.mlh.com/oauth/authorize?client_id%3D...%26redirect_uri%3D...
-                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ NOT encoded
-```
+## Requested fix
 
-### Step 3 — result: 500 Internal Server Error
-
-The `/signin` **page renders** (`200`). The `500` fires when MLH processes that
-`return_to` server-side, with the sign-in URL still shown in the address bar:
-
-> 500 - Internal Server Error
-> Oops, Something Went Wrong
-
-## The encoding defect
-
-`return_to` carries a full URL as a value inside another URL's query string, so
-every reserved character in it must be percent-encoded. MLH encodes most of it
-correctly but leaves two things un-encoded. Compare the broken value against a
-well-formed one:
-
-| | `return_to` value | Result |
-|---|---|---|
-| **Broken** (browser receives) | `https://www.mlh.com/oauth/authorize?client_id%3D...&scope%3Dpublic+offline_access+...` | 500 |
-| **Correct** | `https%3A%2F%2Fwww.mlh.com%2Foauth%2Fauthorize%3Fclient_id%3D...%26scope%3Dpublic%2Boffline_access%2B...` | 200 |
-
-The rest of the value is fine. For example `redirect_uri` is correctly
-double-encoded (`https%253A%252F%252Fmymlh-mcp.git.ci%252Fcallback`) in both. Only
-two things differ, and both point at the same root cause:
-
-1. **Base URL not encoded.** `https://www.mlh.com/oauth/authorize?` appears
-   literally instead of `https%3A%2F%2Fwww.mlh.com%2Foauth%2Fauthorize%3F`. The
-   literal `://` and `?` make the value stop being a single opaque string.
-2. **`scope` separators not encoded.** Literal `+` (`public+offline_access+...`)
-   instead of `%2B`. After one decode pass these become spaces.
-
-The signature (correctly-encoded query fragment appended to an un-encoded
-`base_path + "?"`, with `+`-for-space separators) matches building `return_to` by
-**string concatenation** of an already-encoded query onto an un-encoded base,
-rather than encoding the whole URL as one unit. When the sign-in handler later
-tries to redirect to this value, it parses a URL containing an unencoded nested
-query and raw spaces, which is the likely 500.
-
-## Notes for whoever reproduces this internally
-
-- A **cookie-less** `GET` of the malformed sign-in URL returns `200` (the form
-  renders). We could not make the bare `GET` 500. Reproduce with a **logged-out
-  browser session and a real login submit**, or with a stale/valid MLH session
-  cookie present. The failure is on the leg that **processes/follows** `return_to`
-  (form submit, or a session short-circuit that skips the form), not on rendering
-  the form. That is consistent with the 500 page showing the `/signin` URL in the
-  address bar.
-- A request sent **directly** to `www.mlh.com/oauth/authorize` (skipping the
-  `my.mlh.io` 308) produced a correctly-encoded `return_to` in our tests. The
-  malformed value appeared for the flow that arrived through the legacy 308 hop.
-  This points at the sign-in `return_to` builder on `www.mlh.com`, not at the 308
-  itself.
-- The token endpoint is unaffected: both `my.mlh.io/oauth/token` and
-  `www.mlh.com/oauth/token` respond normally (Doorkeeper `401` on bad creds). Only
-  the browser-facing `/oauth/authorize` performs the 308.
-
-## Requested fixes (either resolves it for us)
-
-1. **Percent-encode the `return_to` base URL** in the `www.mlh.com` sign-in
-   redirect so the whole inner URL survives round-tripping. This is the actual
-   defect.
-2. **Confirm the intended public authorize host.** If `www.mlh.com/oauth/authorize`
-   is now canonical, please update the developer docs so clients point there
-   directly and skip the 308 hop. If `my.mlh.io` remains canonical, the 308 to
-   `www.mlh.com` should preserve a well-formed request.
+1. Fix the `www.mlh.com/signin` 500 for the OAuth authorization-code flow — start
+   from `x-request-id 931eda3e-390a-50e4-f28e-1bce5f01cb51`.
+2. Confirm the canonical OAuth host (`my.mlh.io` vs `www.mlh.com`) and align the
+   developer docs.
 
 ## Contact
 
-Happy to provide full request/response captures, a HAR file, or a live client to
-test against.
+We can provide the full HAR, additional `x-request-id`s, or a live client to test
+against.
