@@ -71,10 +71,10 @@ src/
 │       ├── dialog.ts              # auto-escaping approval dialog
 │       └── index.ts               # clientIdAlreadyApproved, parseRedirectApproval
 ├── mymlh/
-│   ├── api.ts                     # makeMyMLHApi: refresh + auto-refresh fetch
+│   ├── api.ts                     # refreshUpstreamProps + makeMyMLHApi (authed fetch)
 │   └── scopes.ts                  # MyMLH OAuth scopes + endpoint constants
 └── mcp/
-    ├── agent.ts                   # MyMCP DO via McpAgent
+    ├── server.ts                  # createMcpServer: per-request McpServer factory
     └── tools/
         ├── index.ts               # registerAllTools(server, deps)
         └── user.ts                # mymlh_get_user

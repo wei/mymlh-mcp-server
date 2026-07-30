@@ -10,8 +10,9 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "mymlh-mcp-server",
   "main": "src/index.ts",
-  "compatibility_date": "2025-03-10",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2026-04-30",
+  // global_fetch_strictly_public is required by the OAuth provider's CIMD support.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   /**
    * Note: Use secrets to store sensitive data.
    * https://developers.cloudflare.com/workers/configuration/secrets/
@@ -60,24 +61,20 @@
    */
   //  "routes": [{ "pattern": "mymlh-mcp.git.ci", "custom_domain": true }],
   /**
-   * The following bindings are unused as they are defined in each environment.
-   * They are kept here for wrangler to generate proper types.
-   * https://developers.cloudflare.com/workers/wrangler/configuration/#durable-objects
+   * The MyMCP Durable Object backed the pre-2026-07-28 stateful transport.
+   * The spec is stateless now, so v2 deletes the class; the v1 migration stays
+   * so already-deployed environments can replay the history in order.
    */
   "migrations": [
     {
       "new_sqlite_classes": ["MyMCP"],
       "tag": "v1"
+    },
+    {
+      "deleted_classes": ["MyMCP"],
+      "tag": "v2"
     }
   ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "class_name": "MyMCP",
-        "name": "MCP_OBJECT"
-      }
-    ]
-  },
   "kv_namespaces": [
     {
       "binding": "OAUTH_KV",
@@ -91,16 +88,12 @@
         {
           "new_sqlite_classes": ["MyMCP"],
           "tag": "v1"
+        },
+        {
+          "deleted_classes": ["MyMCP"],
+          "tag": "v2"
         }
       ],
-      "durable_objects": {
-        "bindings": [
-          {
-            "class_name": "MyMCP",
-            "name": "MCP_OBJECT"
-          }
-        ]
-      },
       "kv_namespaces": [
         {
           "binding": "OAUTH_KV",
@@ -123,16 +116,12 @@
         {
           "new_sqlite_classes": ["MyMCP"],
           "tag": "v1"
+        },
+        {
+          "deleted_classes": ["MyMCP"],
+          "tag": "v2"
         }
       ],
-      "durable_objects": {
-        "bindings": [
-          {
-            "class_name": "MyMCP",
-            "name": "MCP_OBJECT"
-          }
-        ]
-      },
       "kv_namespaces": [
         {
           "binding": "OAUTH_KV",
@@ -155,16 +144,12 @@
         {
           "new_sqlite_classes": ["MyMCP"],
           "tag": "v1"
+        },
+        {
+          "deleted_classes": ["MyMCP"],
+          "tag": "v2"
         }
       ],
-      "durable_objects": {
-        "bindings": [
-          {
-            "class_name": "MyMCP",
-            "name": "MCP_OBJECT"
-          }
-        ]
-      },
       "kv_namespaces": [
         {
           "binding": "OAUTH_KV",
@@ -187,16 +172,12 @@
         {
           "new_sqlite_classes": ["MyMCP"],
           "tag": "v1"
+        },
+        {
+          "deleted_classes": ["MyMCP"],
+          "tag": "v2"
         }
       ],
-      "durable_objects": {
-        "bindings": [
-          {
-            "class_name": "MyMCP",
-            "name": "MCP_OBJECT"
-          }
-        ]
-      },
       "kv_namespaces": [
         {
           "binding": "OAUTH_KV",

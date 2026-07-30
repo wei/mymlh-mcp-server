@@ -72,7 +72,6 @@ export type Props = {
 };
 
 export type ToolContext = {
-  env: Env;
   getProps: () => Props;
-  fetchMyMLHWithAutoRefresh: (url: string, init?: RequestInit) => Promise<Response>;
+  fetchMyMLH: (url: string, init?: RequestInit) => Promise<Response>;
 };

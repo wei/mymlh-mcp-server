@@ -19,9 +19,9 @@
     "prepare": "lefthook install"
   },
   "dependencies": {
-    "@cloudflare/workers-oauth-provider": "^0.4.0",
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "agents": "^0.12.3",
+    "@cloudflare/workers-oauth-provider": "^0.8.3",
+    "@modelcontextprotocol/server": "2.0.0",
+    "agents": "^0.20.1",
     "hono": "^4.12.16",
     "zod": "^4.4.2"
   },

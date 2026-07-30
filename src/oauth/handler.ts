@@ -20,7 +20,7 @@ app.get("/", (c) =>
   c.json({
     name: pkgName,
     env: c.env.ENV_NAME ?? "unknown",
-    endpoints: ["/mcp", "/sse", "/authorize", "/callback", "/token", "/register"],
+    endpoints: ["/mcp", "/authorize", "/callback", "/token", "/register"],
   }),
 );
 

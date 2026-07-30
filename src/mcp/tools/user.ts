@@ -1,16 +1,16 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { MYMLH_API_BASE } from "../../mymlh/scopes";
 import type { MyMLHUser, ToolContext } from "../../types";
 
 export function registerUserTools(server: McpServer, ctx: ToolContext): void {
-  server.tool("mymlh_get_user", "Fetch current MyMLH user profile", {}, async () => {
+  server.registerTool("mymlh_get_user", { description: "Fetch current MyMLH user profile" }, async () => {
     const { scope } = ctx.getProps();
     const url = new URL(`${MYMLH_API_BASE}/users/me`);
     if (scope?.includes("user:read:education")) url.searchParams.append("expand[]", "education");
     if (scope?.includes("user:read:employment")) url.searchParams.append("expand[]", "professional_experience");
     if (scope?.includes("user:read:address")) url.searchParams.append("expand[]", "address");
 
-    const resp = await ctx.fetchMyMLHWithAutoRefresh(url.toString());
+    const resp = await ctx.fetchMyMLH(url.toString());
     if (!resp.ok) {
       if (resp.status === 401) {
         return {

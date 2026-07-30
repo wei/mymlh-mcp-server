@@ -12,10 +12,6 @@
     {
       "type": "streamable-http",
       "url": "https://mymlh-mcp.git.ci/mcp"
-    },
-    {
-      "type": "sse",
-      "url": "https://mymlh-mcp.git.ci/sse"
     }
   ]
 }

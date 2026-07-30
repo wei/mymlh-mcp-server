@@ -3,7 +3,7 @@
 This repository implements an OAuth-enabled MCP remote HTTP server for MyMLH on Cloudflare Workers using TypeScript and Hono.
 
 ## Project Structure & Module Organization
-- `src/index.ts` — entry; wires `OAuthProvider` to `MyMCP` and the MyMLH handler.
+- `src/index.ts` — entry; wires `OAuthProvider` to the stateless MCP handler and the MyMLH handler. Also holds `tokenExchangeCallback`, which refreshes the upstream MyMLH token and writes it back into the grant.
 - `src/types.ts` — centralized types (`Props`, `MyMLH*`, `ToolContext`).
 - `src/oauth/handler.ts` — Hono app for `/`, `/authorize` (GET/POST), `/callback`.
 - `src/oauth/upstream.ts` — `getUpstreamAuthorizeUrl`, `requestUpstreamToken` (generic auth_code + refresh).
@@ -11,13 +11,13 @@ This repository implements an OAuth-enabled MCP remote HTTP server for MyMLH on 
   - `cookie.ts` — HMAC-SHA256 sign/verify, approved-clients cookie helpers, and `signState`/`verifyState` for OAuth state integrity.
   - `dialog.ts` — auto-escaping `renderApprovalDialog`.
   - `index.ts` — `clientIdAlreadyApproved`, `parseRedirectApproval`.
-- `src/mymlh/api.ts` — `makeMyMLHApi(env, getProps, updateProps)` returning `fetchMyMLHWithAutoRefresh` (uses an internal `refreshUpstreamToken` for proactive/reactive refresh).
+- `src/mymlh/api.ts` — `refreshUpstreamProps(env, props)` for the OAuth refresh path, and `makeMyMLHApi(getProps)` returning `fetchMyMLH` (attaches the bearer token; no refresh of its own).
 - `src/mymlh/scopes.ts` — `MYMLH_AUTH_URL`, `MYMLH_TOKEN_URL`, `MYMLH_API_BASE`, `DEFAULT_MYMLH_SCOPES`, `ALL_MYMLH_SCOPES`.
-- `src/mcp/agent.ts` — `MyMCP extends McpAgent<Env, {}, Props>`; `init()` registers tools.
-- `src/mcp/tools/index.ts` — `registerAllTools(server, { env, getProps, updateProps })`.
+- `src/mcp/server.ts` — `createMcpServer()`, the per-request `McpServer` factory; reads props from `getMcpAuthContext()`.
+- `src/mcp/tools/index.ts` — `registerAllTools(server, { getProps })`.
   - `src/mcp/tools/user.ts` — registers `mymlh_get_user`.
 - `test/unit/` — pure-helper tests (cookie, dialog, approval, upstream, api).
-- `test/integration/` — workerd-runtime tests via `SELF.fetch` (unauthorized, authorize, callback, tools).
+- `test/integration/` — workerd-runtime tests (unauthorized, authorize, callback, tools via `SELF.fetch`; `mcp-handler` drives the stateless handler directly with injected props).
 - Config: `wrangler.jsonc`, `tsconfig.json`, `biome.json`, `vitest.config.mts`, `.dev.vars(.example)`, `.github/workflows/ci.yml`.
 
 ## Build, Test, and Development Commands
@@ -40,20 +40,20 @@ Environment Setup:
 ## Coding Style & Naming Conventions
 - Language: TypeScript (strict). Indent 2 spaces, line width 120, double quotes (Biome enforced).
 - Filenames: kebab-case (e.g., `oauth/handler.ts`, `mymlh/api.ts`).
-- Symbols: camelCase for vars/functions; PascalCase for types/classes (e.g., `MyMCP`, `MyMLHUser`); snake_case for constants and MCP tool names.
+- Symbols: camelCase for vars/functions; PascalCase for types/classes (e.g., `MyMLHUser`, `MyMLHTokenResponse`); snake_case for constants and MCP tool names.
 - Run `pnpm run lint` before committing; Lefthook runs Biome on staged files (pre-commit) and full project (pre-push).
 
 ## Testing Guidelines
 - `pnpm test` runs the Vitest suite (unit + integration) in workerd via `@cloudflare/vitest-pool-workers`. CI runs the same.
-- Unit tests live under `test/unit/` and cover pure helpers (cookie HMAC, upstream URL/token, approval, MyMLH API auto-refresh).
-- Integration tests live under `test/integration/` and hit the worker via `SELF.fetch` (`/`, `/mcp`, `/authorize`, `/callback`).
+- Unit tests live under `test/unit/` and cover pure helpers (cookie HMAC, upstream URL/token, approval, MyMLH API fetch + refresh).
+- Integration tests live under `test/integration/` and hit the worker via `SELF.fetch` (`/`, `/mcp`, `/authorize`, `/callback`). `mcp-handler.test.ts` bypasses OAuth to cover both wire eras the `/mcp` route serves.
 - Outbound mocks: `vi.stubGlobal("fetch", ...)` works for unit tests; SELF.fetch flows do not currently support outbound mocking, so success-path OAuth assertions are covered via unit tests on the underlying helpers.
 - Manual: run `pnpm run dev` and exercise tools via MCP Inspector (`pnpm dlx @modelcontextprotocol/inspector`) at `http://localhost:8788/mcp`.
 - Environment testing: deploy to `alt` or `fallback` via `pnpm run deploy:alt` / `deploy:fallback` for staging.
 
 ### Adding a new tool (pattern)
-- Create a file in `src/mcp/tools/` and export `registerX(server, ctx)` that calls `server.tool(...)`. You may group related tools in one module (e.g., `user.ts`).
-- Use the `ToolContext` from `src/types.ts`: access `env`, `getProps()`, and the MyMLH API helpers.
+- Create a file in `src/mcp/tools/` and export `registerX(server, ctx)` that calls `server.registerTool(name, { description, inputSchema }, handler)`. You may group related tools in one module (e.g., `user.ts`).
+- Use the `ToolContext` from `src/types.ts`: access `getProps()` and the MyMLH API helpers.
 - Import and call your registrar(s) from `src/mcp/tools/index.ts` inside `registerAllTools`.
 - Keep types strict (no `any`/`unknown`); extend `Props` or add precise interfaces if needed.
 
