@@ -10,7 +10,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "mymlh-mcp-server",
   "main": "src/index.ts",
-  "compatibility_date": "2026-04-30",
+  "compatibility_date": "2026-07-28",
   // global_fetch_strictly_public is required by the OAuth provider's CIMD support.
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   /**

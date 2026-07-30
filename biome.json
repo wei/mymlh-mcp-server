@@ -12,7 +12,8 @@
     {
       "includes": ["**/worker-configuration.d.ts"],
       "formatter": { "enabled": false },
-      "linter": { "enabled": false }
+      "linter": { "enabled": false },
+      "assist": { "enabled": false }
     }
   ],
   "formatter": {
@@ -24,7 +25,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "suspicious": {
         "noArrayIndexKey": "off",
         "noExplicitAny": "off"
