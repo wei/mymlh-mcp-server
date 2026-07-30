@@ -7,8 +7,9 @@ This repository implements an OAuth-enabled MCP remote HTTP server for MyMLH on 
 - `src/types.ts` — centralized types (`Props`, `MyMLH*`, `ToolContext`).
 - `src/oauth/handler.ts` — Hono app for `/`, `/authorize` (GET/POST), `/callback`.
 - `src/oauth/upstream.ts` — `getUpstreamAuthorizeUrl`, `requestUpstreamToken` (generic auth_code + refresh).
+- `src/oauth/state.ts` — KV-backed upstream `state` (43-char single-use token, 10 min TTL). MLH's sign-in 500s on states over ~370 chars (session cookie overflow), so the auth request never rides in `state` itself.
 - `src/oauth/approval/` — approval dialog module:
-  - `cookie.ts` — HMAC-SHA256 sign/verify, approved-clients cookie helpers, and `signState`/`verifyState` for OAuth state integrity.
+  - `cookie.ts` — HMAC-SHA256 sign/verify and approved-clients cookie helpers.
   - `dialog.ts` — auto-escaping `renderApprovalDialog`.
   - `index.ts` — `clientIdAlreadyApproved`, `parseRedirectApproval`.
 - `src/mymlh/api.ts` — `refreshUpstreamProps(env, props)` for the OAuth refresh path, and `makeMyMLHApi(getProps)` returning `fetchMyMLH` (attaches the bearer token; no refresh of its own).

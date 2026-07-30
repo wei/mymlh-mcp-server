@@ -7,9 +7,11 @@
  *
  * This file covers the defensive (error) paths that do NOT require outbound calls.
  */
-import { SELF } from "cloudflare:test";
+
+import { env, SELF } from "cloudflare:test";
+import type { AuthRequest } from "@cloudflare/workers-oauth-provider";
 import { beforeEach, describe, expect, it } from "vitest";
-import { signState } from "../../src/oauth/approval/cookie";
+import { createUpstreamState } from "../../src/oauth/state";
 import { injectTestSecrets } from "../helpers/setup-env";
 
 beforeEach(() => {
@@ -22,12 +24,18 @@ describe("/callback", () => {
     expect(resp.status).toBe(400);
   });
 
-  it("returns 400 when state is not valid base64 JSON", async () => {
-    const resp = await SELF.fetch("https://worker.test/callback?code=SOME_CODE&state=!!!not-base64!!!");
+  it("returns 400 when state is not a known token", async () => {
+    const resp = await SELF.fetch(`https://worker.test/callback?code=SOME_CODE&state=${"A".repeat(43)}`);
     expect(resp.status).toBe(400);
   });
 
-  it("returns non-2xx when signed state verifies but upstream code exchange fails", async () => {
+  it("returns 400 for a legacy signed-JSON state", async () => {
+    const legacy = `${"ab".repeat(32)}.${btoa(JSON.stringify({ clientId: "any" }))}`;
+    const resp = await SELF.fetch(`https://worker.test/callback?code=SOME_CODE&state=${encodeURIComponent(legacy)}`);
+    expect(resp.status).toBe(400);
+  });
+
+  it("returns non-2xx when stored state resolves but upstream code exchange fails", async () => {
     const oauthReqInfo = {
       clientId: "any-client",
       redirectUri: "https://client.test/cb",
@@ -36,13 +44,17 @@ describe("/callback", () => {
       responseType: "code",
       codeChallenge: "c".repeat(43),
       codeChallengeMethod: "S256",
-    };
+    } as unknown as AuthRequest;
+    // Seed the same KV namespace the worker reads. SELF and the test runner
+    // share bindings in vitest-pool-workers.
+    const token = await createUpstreamState((env as unknown as Env).OAUTH_KV, oauthReqInfo);
+
     const url = new URL("https://worker.test/callback");
     url.searchParams.set("code", "UPSTREAM_CODE");
-    url.searchParams.set("state", await signState(JSON.stringify(oauthReqInfo), "cookie-secret"));
+    url.searchParams.set("state", token);
 
     const resp = await SELF.fetch(url.href, { redirect: "manual" });
-    // Signed state passes verifyState; upstream token exchange then fails (no real my.mlh.io
+    // The KV token resolves; upstream token exchange then fails (no real my.mlh.io
     // reachable from the test pool), so the handler must produce an error response.
     expect(resp.status).toBeGreaterThanOrEqual(400);
   });

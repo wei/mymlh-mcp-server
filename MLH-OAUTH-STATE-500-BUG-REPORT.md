@@ -1,5 +1,38 @@
 # MLH OAuth bug: `www.mlh.com` sign-in returns 500 because it decodes the opaque `state` parameter
 
+> ## 2026-07-30 update: root cause isolated — session cookie overflow, not state decoding
+>
+> New evidence (browser HAR with cookies + a cookie-propagating replay) pins the
+> real mechanism. It is the **length** of `state`, not its contents:
+>
+> 1. A logged-out `GET /oauth/authorize` responds `302 → /signin?return_to=…`
+>    **and stores the entire `return_to` URL (including our `state`) in the
+>    encrypted cookie-backed Rails session** (`_mlh_core_session`).
+> 2. On the next request, `/signin` loads that session. When `state` is long
+>    enough to push the serialized session cookie past the Rails cookie-store
+>    limit (4096 bytes), `/signin` returns **500** (`x-runtime` ~0.03–0.09s,
+>    consistent with an unrescued `CookieOverflow`-class failure).
+>
+> Measured threshold with our client_id/redirect_uri/scope, stable across
+> repeats: **`state` of ≤370 chars → 200; ≥375 chars → 500.** Content is
+> irrelevant: 380 `a` characters reproduce the 500; the exact 601-char
+> production state passes once shortened. The original isolation below
+> accidentally confounded content with length (16-char opaque vs 429-char
+> real state).
+>
+> Repro requires cookies to round-trip like a browser
+> (`curl -L -c jar -b jar`); a cookie-less replay of the same URLs returns
+> 200, which is why the bug intermittently "disappears" in testing.
+>
+> **Requested fix (revised):** don't persist `return_to` in the cookie
+> session (or bound/queryize it), and rescue session-write overflow so
+> `/signin` degrades gracefully instead of 500ing. RFC 6749 §10.12 puts no
+> length ceiling on `state`; clients may legitimately send hundreds of chars.
+>
+> **Our mitigation (deployed):** we now send a 43-char single-use random
+> token as upstream `state` and keep the request payload server-side, which
+> stays under the threshold regardless of client.
+
 **Reported by:** MyMLH MCP Server maintainers (`https://mymlh-mcp.git.ci`)
 **Date:** 2026-07-10
 **Component:** `www.mlh.com` OAuth sign-in (`/oauth/authorize` → `/signin`)

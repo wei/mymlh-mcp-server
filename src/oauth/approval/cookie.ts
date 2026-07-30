@@ -66,9 +66,6 @@ async function verifyToken(token: string, secret: string): Promise<string | null
   }
 }
 
-export const signState = signToken;
-export const verifyState = verifyToken;
-
 export async function readApprovedClients(cookieHeader: string | null, secret: string): Promise<string[] | null> {
   if (!cookieHeader) return null;
   const target = cookieHeader

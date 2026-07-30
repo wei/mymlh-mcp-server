@@ -65,5 +65,9 @@ describe("/authorize", () => {
     expect(loc).toContain("client_id=test-client-id");
     expect(resp.headers.get("set-cookie")).toContain("mcp-approved-clients=");
     expect(resp.headers.get("set-cookie")).toContain("Max-Age=5");
+    // Upstream state must be the short KV token, never the signed JSON blob:
+    // MLH's /signin 500s once state exceeds ~370 chars (session cookie overflow).
+    const upstreamState = new URL(loc).searchParams.get("state") ?? "";
+    expect(upstreamState).toMatch(/^[A-Za-z0-9_-]{43}$/);
   });
 });
